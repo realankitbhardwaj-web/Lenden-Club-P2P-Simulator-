@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LenDenClub Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#f0f4f8;color:#1a2332;font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
+
+/* ── UPLOAD ── */
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:linear-gradient(160deg,#e8f4fd 0%,#f0f4f8 50%,#fef9ee 100%);}
+.upload-box{width:100%;max-width:380px;}
+.upload-hero{text-align:center;margin-bottom:32px;}
+.upload-logo-wrap{width:72px;height:72px;background:linear-gradient(135deg,#0ea5e9,#06b6d4);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(14,165,233,0.3);}
+.upload-title{color:#1a2332;font-size:22px;font-weight:800;letter-spacing:-0.5px;}
+.upload-sub{color:#64748b;font-size:13px;margin-top:6px;line-height:1.6;}
+.file-drop{display:flex;flex-direction:column;align-items:center;border:2px dashed #cbd5e1;border-radius:16px;padding:22px 16px;cursor:pointer;background:#fff;transition:all 0.2s;gap:6px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.file-drop:hover{border-color:#0ea5e9;background:#f0f9ff;}
+.file-drop.has-file{border-color:#10b981;background:#f0fdf4;border-style:solid;}
+.file-drop-icon{font-size:28px;}
+.file-drop-label{color:#64748b;font-size:12px;font-weight:600;}
+.file-drop.has-file .file-drop-label{color:#10b981;}
+.file-drop-name{color:#94a3b8;font-size:10px;word-break:break-all;text-align:center;}
+.file-drop input{display:none;}
+.load-btn{width:100%;padding:15px;background:#e2e8f0;border:none;border-radius:14px;color:#94a3b8;font-size:14px;font-weight:700;cursor:default;transition:all 0.25s;margin-top:4px;letter-spacing:0.3px;}
+.load-btn.ready{background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(14,165,233,0.35);}
+.upload-hint{margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.upload-hint-title{color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.upload-hint p{color:#64748b;font-size:11px;line-height:2;}
+.upload-hint b{color:#1a2332;font-weight:600;}
+.error-msg{color:#ef4444;font-size:11px;text-align:center;margin-bottom:8px;background:#fef2f2;padding:8px 12px;border-radius:8px;border:1px solid #fecaca;}
+
+/* ── DASHBOARD ── */
+#dashboard-screen{display:none;min-height:100vh;}
+
+/* Header */
+.header{background:#fff;border-bottom:1px solid #e8edf5;padding:14px 16px 0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.header-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.header-icon{background:linear-gradient(135deg,#0ea5e9,#06b6d4);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 3px 8px rgba(14,165,233,0.3);}
+.header-info{flex:1;min-width:0;}
+.header-title{font-weight:800;font-size:15px;color:#1a2332;letter-spacing:-0.3px;}
+.header-sub{color:#94a3b8;font-size:11px;margin-top:1px;}
+.header-actions{display:flex;gap:6px;flex-shrink:0;align-items:center;}
+.reset-btn{background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer;font-weight:500;}
+.tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:2px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{background:none;border:none;border-bottom:3px solid transparent;color:#94a3b8;padding:9px 12px;cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;transition:all 0.2s;}
+.tab-btn.active{border-bottom-color:#0ea5e9;color:#0ea5e9;font-weight:700;}
+.tab-btn.alert{color:#ef4444;}
+.content{padding:14px;max-width:600px;margin:0 auto;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ── STAT CARDS ── */
+.cards-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.stat-card{flex:1 1 140px;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.stat-card.normal{background:#fff;border:1px solid #e8edf5;}
+.stat-card.accent{background:linear-gradient(135deg,#0ea5e9,#06b6d4);border:none;}
+.stat-card.warn{background:linear-gradient(135deg,#fef2f2,#fff5f5);border:1px solid #fecaca;}
+.stat-card.good{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #bbf7d0;}
+.stat-card.gold{background:linear-gradient(135deg,#fffbeb,#fef9ee);border:1px solid #fde68a;}
+.stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.stat-card.normal .stat-label{color:#94a3b8;}
+.stat-card.accent .stat-label{color:rgba(255,255,255,0.75);}
+.stat-card.warn .stat-label{color:#f87171;}
+.stat-card.good .stat-label{color:#10b981;}
+.stat-card.gold .stat-label{color:#d97706;}
+.stat-value{font-size:20px;font-weight:800;font-family:'Inter',monospace;letter-spacing:-0.5px;}
+.stat-card.normal .stat-value{color:#1a2332;}
+.stat-card.accent .stat-value{color:#fff;}
+.stat-card.warn .stat-value{color:#ef4444;}
+.stat-card.good .stat-value{color:#10b981;}
+.stat-card.gold .stat-value{color:#d97706;}
+.stat-sub{font-size:10px;margin-top:4px;line-height:1.4;}
+.stat-card.normal .stat-sub{color:#94a3b8;}
+.stat-card.accent .stat-sub{color:rgba(255,255,255,0.7);}
+.stat-card.warn .stat-sub{color:#fca5a5;}
+.stat-card.good .stat-sub{color:#6ee7b7;}
+.stat-card.gold .stat-sub{color:#fbbf24;}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:700;white-space:nowrap;}
+.badge-green{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;}
+.badge-red{background:#fee2e2;color:#dc2626;border:1px solid #fecaca;}
+.badge-yellow{background:#fef9c3;color:#ca8a04;border:1px solid #fde68a;}
+.badge-blue{background:#dbeafe;color:#2563eb;border:1px solid #bfdbfe;}
+.badge-purple{background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;}
+
+/* ── SECTION ── */
+.section{background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.section-title{color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px;}
+
+/* ── PROGRESS ── */
+.progress-bg{background:#f1f5f9;border-radius:99px;overflow:hidden;margin-top:5px;}
+.progress-fill{border-radius:99px;transition:width 0.5s ease;}
+
+/* ── STATUS GRID ── */
+.status-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
+.status-item{text-align:center;background:#f8fafc;border-radius:12px;padding:10px 6px;}
+.status-count{font-size:22px;font-weight:800;font-family:'Inter',monospace;}
+.status-lbl{color:#94a3b8;font-size:10px;font-weight:500;margin-top:2px;}
+
+/* ── BAR CHART ── */
+.bar-chart-wrap{display:flex;align-items:flex-end;gap:4px;height:90px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar-fill{width:100%;border-radius:4px 4px 0 0;transition:height 0.4s;}
+.bar-lbl{color:#cbd5e1;font-size:8px;transform:rotate(-45deg);white-space:nowrap;}
+/* ── LINE CHART ── */
+.period-tabs{display:flex;gap:6px;margin-bottom:10px;}
+.period-tab{background:#f1f5f9;border:none;color:#64748b;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.period-tab.active{background:#0ea5e9;color:#fff;}
+.line-chart-wrap{position:relative;width:100%;height:110px;}
+.line-chart-wrap svg{width:100%;height:100%;}
+.line-tooltip{position:absolute;background:#1a2332;color:#fff;font-size:10px;padding:4px 8px;border-radius:6px;pointer-events:none;display:none;white-space:nowrap;z-index:10;}
+/* ── ROI INFO BOX ── */
+.roi-info-box{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:12px;margin-top:10px;font-size:11px;color:#0369a1;line-height:1.6;}
+.roi-info-box b{color:#0c4a6e;}
+
+/* ── TOGGLE SWITCH ── */
+#reinvest-toggle:checked + span { background:#10b981; }
+#reinvest-toggle:not(:checked) + span { background:#cbd5e1; }
+#reinvest-toggle:checked + span span { transform:translateX(20px); }
+#reinvest-toggle:not(:checked) + span span { transform:translateX(0); }
+#reinvest-toggle2:checked + span { background:#10b981; }
+#reinvest-toggle2:not(:checked) + span { background:#cbd5e1; }
+#reinvest-toggle2:checked + span span { transform:translateX(20px); }
+#reinvest-toggle2:not(:checked) + span span { transform:translateX(0); }
+/* ── MONTHLY RETURN TABLE ── */
+.mret-table{width:100%;border-collapse:collapse;font-size:11px;}
+.mret-table th{color:#94a3b8;font-weight:600;padding:5px 4px;border-bottom:1.5px solid #f1f5f9;font-size:10px;text-align:left;}
+.mret-table td{padding:8px 4px;border-bottom:1px solid #f8fafc;vertical-align:middle;}
+.mret-table tr:last-child td{border-bottom:none;}
+/* ── MONTHLY ROI TABLE ── */
+.mroi-table{width:100%;border-collapse:collapse;font-size:11px;}
+.mroi-table th{color:#94a3b8;font-weight:600;text-align:left;padding:6px 4px;border-bottom:1.5px solid #f1f5f9;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;}
+.mroi-table td{padding:8px 4px;border-bottom:1px solid #f8fafc;color:#1a2332;vertical-align:middle;}
+.mroi-table tr:last-child td{border-bottom:none;}
+.roi-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px;}
+.roi-bar-bg{background:#f1f5f9;border-radius:4px;height:6px;margin-top:3px;}
+.roi-bar-fill{height:6px;border-radius:4px;transition:width 0.4s;}
+/* ── FILTERS ── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.filter-btn{background:#fff;border:1.5px solid #e2e8f0;color:#64748b;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.filter-btn.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff;font-weight:700;}
+
+/* ── TABLE ── */
+.table-wrap{background:#fff;border:1px solid #e8edf5;border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.table-wrap.dpd-warn{border-color:#fde68a;}
+.table-wrap.npa-warn{border-color:#fecaca;}
+.table-head{background:#f8fafc;border-bottom:1px solid #e8edf5;}
+.table-body{overflow-y:visible;-webkit-overflow-scrolling:touch;}
+.table-body::-webkit-scrollbar{width:3px;}
+.table-body::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:2px;}
+.table-row{display:grid;padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+.table-row:last-child{border-bottom:none;}
+.tr-even{background:#fff;}
+.tr-odd{background:#fafbfc;}
+.tr-npa{background:#fff5f5;}
+.tr-dpd{background:#fffbeb;}
+.th{color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.td{font-size:11px;color:#475569;}
+.td.mono{font-family:'Inter',monospace;font-weight:500;}
+.td.green{color:#10b981;font-weight:600;}
+.td.red{color:#ef4444;font-weight:600;}
+.td.yellow{color:#d97706;font-weight:600;}
+.td.muted{color:#cbd5e1;}
+.td.right{text-align:right;}
+.td.blue{color:#0ea5e9;font-weight:600;}
+
+/* ── NPA ALERT ── */
+.npa-alert{display:flex;align-items:center;gap:12px;border-radius:14px;padding:14px;margin-bottom:12px;}
+.npa-alert.ok{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #86efac;}
+.npa-alert.bad{background:linear-gradient(135deg,#fef2f2,#fff5f5);border:1.5px solid #fca5a5;}
+.npa-alert-icon{font-size:28px;flex-shrink:0;}
+.npa-alert-title{font-weight:700;font-size:14px;}
+.npa-alert-sub{font-size:11px;margin-top:3px;}
+
+/* ── SUB HEADS ── */
+.sub-head{padding:10px 14px;border-bottom:1px solid #f1f5f9;}
+.sub-head.dpd{background:#fffbeb;border-color:#fde68a;}
+.sub-head.npa{background:#fef2f2;border-color:#fecaca;}
+.sub-head span{font-size:12px;font-weight:700;}
+
+/* ── METRICS ── */
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9;}
+.metric-row:last-child{border-bottom:none;}
+.metric-label{font-size:12px;color:#64748b;}
+.metric-value{font-size:12px;color:#1a2332;font-weight:700;}
+.metric-value.warn{color:#ef4444;}
+.metric-value.good{color:#10b981;}
+
+/* ── MILESTONE ── */
+.milestone-wrap{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #86efac;border-radius:16px;padding:16px;margin-bottom:12px;}
+.ms-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.ms-name{font-size:12px;color:#1a2332;font-weight:600;}
+.ms-pct{font-size:11px;color:#10b981;font-weight:700;}
+.ms-feet{display:flex;justify-content:space-between;margin-top:4px;}
+.ms-feet span{font-size:10px;color:#6ee7b7;}
+
+/* ── RISK ── */
+.risk-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.risk-row:last-child{border-bottom:none;}
+.risk-left{display:flex;align-items:center;gap:8px;}
+.risk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+
+/* ── NPA LOAN ROW ── */
+.npa-loan-row{padding:11px 14px;border-bottom:1px solid #fef2f2;}
+.npa-loan-row:last-child{border-bottom:none;}
+.npa-loan-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:4px;}
+.npa-loan-meta{display:flex;gap:12px;flex-wrap:wrap;}
+
+/* ── CALENDAR ── */
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.cal-dow{font-size:10px;color:#94a3b8;text-align:center;font-weight:600;padding:3px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day{background:#f8fafc;border-radius:8px;padding:5px 2px;text-align:center;min-height:42px;border:1px solid transparent;}
+.cal-day.has-repay{background:#eff6ff;border-color:#bfdbfe;}
+.cal-day.today{border:2px solid #0ea5e9;}
+.cal-date{font-size:9px;color:#94a3b8;margin-bottom:2px;}
+.cal-day.today .cal-date{color:#0ea5e9;font-weight:700;}
+.cal-day.has-repay .cal-date{color:#2563eb;font-weight:600;}
+.cal-amt{font-size:8px;color:#0ea5e9;font-weight:700;line-height:1.2;}
+
+/* ── SCORE DIST ── */
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.score-label{font-size:11px;color:#475569;width:58px;flex-shrink:0;font-weight:500;}
+.score-bar-wrap{flex:1;}
+.score-count{font-size:11px;font-weight:700;width:28px;text-align:right;flex-shrink:0;}
+
+/* ── CALC ── */
+.calc-label{color:#64748b;font-size:11px;font-weight:500;margin-bottom:5px;}
+.calc-input{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;color:#1a2332;font-size:14px;width:100%;font-weight:600;transition:border 0.15s;}
+.calc-input:focus{outline:none;border-color:#0ea5e9;background:#fff;}
+.calc-result{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #86efac;border-radius:12px;padding:13px;margin-top:10px;}
+.calc-result-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(134,239,172,0.4);}
+.calc-result-row:last-child{border-bottom:none;}
+.calc-result-label{font-size:11px;color:#064e3b;}
+.calc-result-value{font-size:12px;color:#10b981;font-weight:700;}
+
+/* ── AGING ── */
+.aging-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.aging-row:last-child{border-bottom:none;}
+.aging-label{font-size:11px;color:#475569;flex:1;}
+.aging-count{font-size:14px;font-weight:800;font-family:'Inter',monospace;width:28px;text-align:center;}
+.aging-bar-wrap{flex:2;}
+
+/* ── TENURE TABS ── */
+.tenure-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.tenure-tab{flex:1;min-width:48px;padding:7px 6px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;color:#64748b;font-size:11px;text-align:center;cursor:pointer;transition:all 0.15s;font-weight:500;}
+.tenure-tab.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff;font-weight:700;}
+
+/* ── MONTH CHART ── */
+.month-chart{display:flex;align-items:flex-end;gap:5px;height:90px;margin-top:8px;}
+.month-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.month-bar{width:100%;border-radius:4px 4px 0 0;}
+.month-lbl{font-size:9px;color:#cbd5e1;white-space:nowrap;}
+.month-val{font-size:8px;color:#0ea5e9;font-weight:700;}
+
+/* ── IDLE CASH ── */
+.idle-card{background:linear-gradient(135deg,#fffbeb,#fef9ee);border:1.5px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(217,119,6,0.1);}
+
+/* ── HEALTH SCORE ── */
+.health-ring{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.health-inner{width:54px;height:54px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+
+/* ── SHARE ── */
+.share-btn{background:#fff;border:1.5px solid #e2e8f0;color:#64748b;border-radius:12px;padding:11px 16px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;width:100%;justify-content:center;transition:all 0.2s;margin-top:10px;}
+.share-btn:hover{border-color:#0ea5e9;color:#0ea5e9;background:#f0f9ff;}
+
+/* ── SHARE MODAL ── */
+#share-modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:999;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(4px);}
+.share-sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;}
+.share-handle{width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 20px;}
+.share-title{font-weight:800;font-size:16px;color:#1a2332;margin-bottom:14px;}
+.share-text-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;font-family:monospace;font-size:11px;color:#475569;white-space:pre-wrap;line-height:1.8;max-height:220px;overflow-y:auto;}
+.share-btns{display:flex;gap:10px;margin-top:14px;}
+.share-copy-btn{flex:2;padding:13px;background:linear-gradient(135deg,#0ea5e9,#06b6d4);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(14,165,233,0.3);}
+.share-close-btn{flex:1;padding:13px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;}
+
+/* ── UTILS ── */
+.divider{height:1px;background:#f1f5f9;margin:10px 0;}
+.chip{display:inline-block;background:#f1f5f9;color:#64748b;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:500;}
+.empty-state{padding:28px 16px;text-align:center;color:#94a3b8;font-size:12px;}
+.empty-state-icon{font-size:32px;margin-bottom:8px;}
+
+@media(max-width:360px){.stat-card{flex:1 1 120px;}.stat-value{font-size:17px;}}
+</style>
+</head>
+<body>
+
+<!-- ══ UPLOAD SCREEN ══ -->
+<div id="upload-screen">
+  <div class="upload-box">
+    <div class="upload-hero">
+      <div class="upload-logo-wrap">💰</div>
+      <div class="upload-title">LenDen Dashboard</div>
+      <div class="upload-sub">Apni Excel files upload karo<br>Portfolio auto-update ho jayega</div>
+    </div>
+
+    <label class="file-drop" id="acc-drop" for="acc-input">
+      <div class="file-drop-icon" id="acc-icon">📄</div>
+      <div class="file-drop-label" id="acc-label">Account Statement</div>
+      <div class="file-drop-name" id="acc-name">Tap karke .xlsx select karo</div>
+      <input type="file" id="acc-input" accept=".xlsx">
+    </label>
+
+    <label class="file-drop" id="ml-drop" for="ml-input">
+      <div class="file-drop-icon" id="ml-icon">📊</div>
+      <div class="file-drop-label" id="ml-label">Manual Lending Report</div>
+      <div class="file-drop-name" id="ml-name">Tap karke .xlsx select karo</div>
+      <input type="file" id="ml-input" accept=".xlsx">
+    </label>
+
+    <div style="margin-top:14px">
+      <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">💬 WhatsApp Repayment Messages <span style="font-weight:400;color:#94a3b8">(optional, for exact monthly interest)</span></div>
+      <textarea id="wa-input" placeholder="LenDenClub ke WhatsApp repayment messages yahan paste karo (poora chat copy-paste kar sakte ho, dashboard khud relevant lines dhoondh lega)" style="width:100%;min-height:90px;padding:10px;border-radius:12px;border:1px solid #e2e8f0;font-size:12px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px">Bina iske bhi dashboard chalega — interest tab estimate hoga, exact nahi</div>
+    </div>
+
+    <div class="error-msg" id="upload-error" style="display:none"></div>
+    <button class="load-btn" id="load-btn" onclick="loadDashboard()">Dashboard Load Karo →</button>
+
+    <div class="upload-hint">
+      <div class="upload-hint-title">Zaruri Files</div>
+      <p>📄 <b>Account_Statement_Report_*.xlsx</b><br>📊 <b>MANUAL_LENDING_REPORT_*.xlsx</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard-screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-icon">💰</div>
+      <div class="header-info">
+        <div class="header-title">LenDen Portfolio</div>
+        <div class="header-sub" id="hdr-sub">— · —</div>
+      </div>
+      <div class="header-actions">
+        <span class="badge badge-green" id="hdr-badge">0% NPA</span>
+        <button class="reset-btn" onclick="resetDashboard()">↩ Upload</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="tab-btn" onclick="switchTab('analytics',this)">Analytics</button>
+      <button class="tab-btn" onclick="switchTab('loans',this)">Loans</button>
+      <button class="tab-btn" id="npa-tab-btn" onclick="switchTab('npa',this)">NPA/DPD</button>
+      <button class="tab-btn" onclick="switchTab('cashflow',this)">Cashflow</button>
+      <button class="tab-btn" onclick="switchTab('planner',this)">Planner</button>
+      <button class="tab-btn" onclick="switchTab('transactions',this)">Txns</button>
+      <button class="tab-btn" onclick="switchTab('insights',this)">Insights</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="tab-pane active" id="tab-overview">
+      <div style="height:12px"></div>
+      <div class="cards-row" id="ov-r1"></div>
+      <div class="cards-row" id="ov-r2"></div>
+      <div class="cards-row" id="ov-r3"></div>
+      <div class="section" id="ov-month-history"></div>
+      <div class="section" id="ov-reinvest"></div>
+      <div class="section">
+        <div class="section-title">Loan Status</div>
+        <div class="status-grid" id="ov-status"></div>
+      </div>
+      <div class="section" id="roi-formula-section">
+        <div class="roi-info-box" id="roi-formula-info"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Interest Rate Distribution</div>
+        <div id="ov-rates"></div>
+        <div id="ov-rate-footer" style="color:#94a3b8;font-size:10px;margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9"></div>
+      </div>
+      <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="section-title" style="margin-bottom:0">Repayment Trend</div>
+          <div class="period-tabs" id="period-tabs">
+            <button class="period-tab active" onclick="switchPeriod(1,this)">1M</button>
+            <button class="period-tab" onclick="switchPeriod(3,this)">3M</button>
+            <button class="period-tab" onclick="switchPeriod(6,this)">6M</button>
+            <button class="period-tab" onclick="switchPeriod(0,this)">All</button>
+          </div>
+        </div>
+        <div class="line-chart-wrap" id="ov-daily-chart">
+          <div class="line-tooltip" id="line-tip"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="tab-pane" id="tab-analytics">
+      <div style="height:12px"></div>
+      <div class="section">
+        <div class="section-title">Monthly Repayment Trend</div>
+        <div class="month-chart" id="monthly-chart"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9">
+          <span style="font-size:10px;color:#94a3b8" id="monthly-footer-l"></span>
+          <span style="font-size:10px;color:#10b981;font-weight:600" id="monthly-footer-r"></span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Monthly ROI on Deployed Capital</div>
+        <div style="display:flex;gap:14px;margin-bottom:8px;font-size:10px;font-weight:600">
+          <span style="display:flex;align-items:center;gap:5px">
+            <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/></svg>
+            <span style="color:#6366f1">Annualized ROI (rate × days)</span>
+          </span>
+        </div>
+        <div id="roi-dual-graph" style="position:relative;width:100%;height:120px;margin-bottom:14px"></div>
+        <div id="monthly-roi-chart" style="overflow-x:auto"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Tenure-wise Performance</div>
+        <div class="tenure-tabs" id="tenure-tabs"></div>
+        <div id="tenure-content"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Borrower Score Distribution</div>
+        <div id="score-dist"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Disbursement Concentration</div>
+        <div id="concentration-risk"></div>
+        <div style="color:#94a3b8;font-size:10px;margin-top:8px;display:flex;align-items:center;gap:4px"><span>⚠️</span> Ek hi date ke zyada loans = higher risk</div>
+      </div>
+    </div>
+
+    <!-- LOANS -->
+    <div class="tab-pane" id="tab-loans">
+      <div style="height:12px"></div>
+      <div class="filter-row" id="loan-filters"></div>
+      <div class="table-wrap">
+        <div class="table-row table-head" style="grid-template-columns:58px 50px 50px 58px 52px 40px">
+          <div class="th">Date</div><div class="th">Amt</div><div class="th">Rate</div>
+          <div class="th">Recv'd</div><div class="th">Status</div><div class="th">DPD</div>
+        </div>
+        <div class="table-body" id="loans-body"></div>
+      </div>
+    </div>
+
+    <!-- NPA/DPD -->
+    <div class="tab-pane" id="tab-npa">
+      <div style="height:12px"></div>
+      <div class="cards-row" id="npa-cards"></div>
+      <div class="npa-alert ok" id="npa-health-alert">
+        <div class="npa-alert-icon" id="npa-alert-icon">🟢</div>
+        <div>
+          <div class="npa-alert-title" id="npa-alert-title" style="color:#16a34a">Portfolio bilkul healthy hai!</div>
+          <div class="npa-alert-sub" id="npa-alert-sub" style="color:#15803d">Sab borrowers timely repayment kar rahe hain</div>
+        </div>
+      </div>
+      <div id="dpd-aging-section"></div>
+      <div id="dpd-section"></div>
+      <div id="npa-loans-section"></div>
+      <div class="section" style="margin-top:12px">
+        <div class="section-title">NPA Risk Levels</div>
+        <div id="risk-levels"></div>
+        <div id="risk-current" style="color:#94a3b8;font-size:11px;margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9"></div>
+      </div>
+    </div>
+
+    <!-- CASHFLOW -->
+    <div class="tab-pane" id="tab-cashflow">
+      <div style="height:12px"></div>
+      <div id="idle-cash-section"></div>
+      <div class="section">
+        <div class="section-title">Upcoming Repayments — Next 30 Days</div>
+        <div style="color:#94a3b8;font-size:10px;margin-bottom:10px">Estimated basis loan tenure & disbursement date</div>
+        <div class="cal-header">
+          <div class="cal-dow">Su</div><div class="cal-dow">Mo</div><div class="cal-dow">Tu</div>
+          <div class="cal-dow">We</div><div class="cal-dow">Th</div><div class="cal-dow">Fr</div><div class="cal-dow">Sa</div>
+        </div>
+        <div class="cal-grid" id="cashflow-cal"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Expected Cashflow — Next 3 Months</div>
+        <div id="expected-cashflow"></div>
+      </div>
+    </div>
+
+    <!-- PLANNER -->
+    <div class="tab-pane" id="tab-planner">
+      <div style="height:12px"></div>
+
+      <!-- MONTHLY RETURN SUMMARY -->
+      <div class="section" id="monthly-return-section">
+        <div class="section-title">📊 Monthly Return</div>
+        <div id="monthly-return-table"></div>
+      </div>
+
+      <!-- REINVESTMENT CALCULATOR -->
+      <div class="section">
+        <div class="section-title">🔄 Goal Planner</div>
+
+        <!-- Inputs row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="calc-label">Monthly SIP (₹)</div>
+            <input class="calc-input" id="calc-add" type="number" value="10000" oninput="runCalc()">
+          </div>
+          <div>
+            <div class="calc-label">Rate % p.a.</div>
+            <input class="calc-input" id="calc-rate" type="number" value="44" oninput="this.dataset.userEdited='1';runCalc()">
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="calc-label">Target corpus (₹)</div>
+          <input class="calc-input" id="calc-target" type="number" value="100000" oninput="runCalc()">
+        </div>
+
+        <!-- Reinvest toggle -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:10px 14px;margin-bottom:12px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#1a2332">Interest Reinvest karo?</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:2px" id="reinvest-sublabel">ON: Compound growth | OFF: Interest withdraw karo</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="reinvest-toggle" checked onchange="runCalc()" style="opacity:0;width:0;height:0">
+            <span id="reinvest-track" style="position:absolute;cursor:pointer;inset:0;background:#10b981;border-radius:24px;transition:0.3s">
+              <span style="position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;transform:translateX(20px)" id="reinvest-thumb"></span>
+            </span>
+          </label>
+        </div>
+
+        <div id="calc-result"></div>
+
+        <!-- Growth chart -->
+        <div style="margin-top:14px">
+          <div style="font-size:11px;font-weight:600;color:#475569;margin-bottom:6px">Corpus Growth Projection</div>
+          <div id="growth-chart" style="position:relative;width:100%;height:130px"></div>
+        </div>
+      </div>
+
+      <!-- MILESTONES -->
+      <div class="milestone-wrap" id="milestones"></div>
+
+      <!-- TARGET DATE CALCULATOR -->
+      <div class="section">
+        <div class="section-title">📅 Target Date Calculator</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <div class="calc-label">Target corpus (₹)</div>
+            <input class="calc-input" id="target-corpus" type="number" value="500000" oninput="runTargetCalc()">
+          </div>
+          <div>
+            <div class="calc-label">Monthly SIP (₹)</div>
+            <input class="calc-input" id="target-monthly" type="number" value="10000" oninput="runTargetCalc()">
+          </div>
+        </div>
+        <!-- Reinvest toggle for target calc -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:10px 14px;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:#1a2332">Interest Reinvest?</div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px">
+            <input type="checkbox" id="reinvest-toggle2" checked onchange="runTargetCalc()" style="opacity:0;width:0;height:0">
+            <span id="reinvest-track2" style="position:absolute;cursor:pointer;inset:0;background:#10b981;border-radius:24px;transition:0.3s">
+              <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;transform:translateX(20px)" id="reinvest-thumb2"></span>
+            </span>
+          </label>
+        </div>
+        <div id="target-result"></div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="tab-pane" id="tab-transactions">
+      <div style="height:12px"></div>
+      <div class="filter-row" id="tx-filters"></div>
+      <div class="table-wrap">
+        <div class="table-row table-head" style="grid-template-columns:60px 1fr 64px 64px">
+          <div class="th">Date</div><div class="th">Type</div>
+          <div class="th" style="text-align:right">Credit</div>
+          <div class="th" style="text-align:right">Debit</div>
+        </div>
+        <div class="table-body" id="tx-body"></div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="tab-pane" id="tab-insights">
+      <div style="height:12px"></div>
+      <div class="section">
+        <div class="section-title">Key Metrics</div>
+        <div id="metrics-list"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Portfolio Health Score</div>
+        <div id="health-score"></div>
+      </div>
+      <button class="share-btn" onclick="shareCard()">📤 Portfolio Summary Share Karo</button>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /dashboard -->
+
+<!-- ══ SHARE MODAL ══ -->
+<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:999;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);">
+  <div class="share-sheet">
+    <div class="share-handle"></div>
+    <div class="share-title">📤 Portfolio Summary</div>
+    <div class="share-text-box" id="share-content"></div>
+    <div class="share-btns">
+      <button class="share-copy-btn" onclick="copyShare()">📋 Copy Text</button>
+      <button class="share-close-btn" onclick="el('share-modal').style.display='none'">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE
+let APP={summary:{},transactions:[],mlSummary:{},loans:[]};
+let accFile=null,mlFile=null,activeLoanFilter='ALL',activeTxFilter='ALL',activeTenure='all';
+const TODAY=new Date();
+
+// ─── HELPERS
+const fmt=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK=n=>n>=1000?'₹'+(n/1000).toFixed(1)+'K':'₹'+Number(n).toFixed(0);
+const fmtP=n=>n.toFixed(2)+'%';
+const el=id=>document.getElementById(id);
+
+// ─── WHATSAPP MESSAGE PARSER (exact daily interest, no estimation)
+// Parses LenDenClub repayment WhatsApp messages of the form:
+// [18/05, 4:45 pm] LenDenClub: We've successfully processed your repayment of *₹429.94 today.*
+// Principal Repaid: *₹416.66*
+// Interest Earned: *₹13.28*
+function parseWhatsAppMessages(text){
+  if(!text||!text.trim()) return{};
+  const byDate={}; // 'YYYY-MM-DD' -> {principal, interest, credit}
+  // Find each date stamp like [18/05, 4:45 pm] or [18/05/2026, 4:45 pm]
+  const dateRe=/\[(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?,/g;
+  const matches=[...text.matchAll(dateRe)];
+  const now=new Date();
+  for(let i=0;i<matches.length;i++){
+    const m=matches[i];
+    const dd=+m[1],mm=+m[2];
+    let yyyy=m[3]?(m[3].length===2?2000+ +m[3]: +m[3]):null;
+    if(!yyyy){
+      // No year in message — infer: if month is after current month, assume previous year, else current year
+      yyyy=now.getFullYear();
+      if(mm>now.getMonth()+1) yyyy-=1;
+    }
+    const segStart=m.index;
+    const segEnd=i+1<matches.length?matches[i+1].index:text.length;
+    const segment=text.slice(segStart,segEnd);
+    const prinM=segment.match(/Principal\s*Repaid:?\s*\*?₹?\s*([\d,]+\.?\d*)/i);
+    const intM=segment.match(/Interest\s*Earned:?\s*\*?₹?\s*([\d,]+\.?\d*)/i);
+    if(!prinM&&!intM) continue; // not a repayment-breakup message
+    const principal=prinM?parseFloat(prinM[1].replace(/,/g,'')):0;
+    const interest=intM?parseFloat(intM[1].replace(/,/g,'')):0;
+    const dateKey=yyyy+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+    if(!byDate[dateKey]) byDate[dateKey]={principal:0,interest:0};
+    byDate[dateKey].principal+=principal;
+    byDate[dateKey].interest+=interest;
+  }
+  return byDate;
+}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function parseRupee(v){if(v==null)return 0;return parseFloat(String(v).replace(/[₹,\s]/g,''))||0;}
+
+// ─── PARSERS
+function parseAccountStatement(wb){
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const s={lenderName:'',lenderId:'',fromDate:'',toDate:'',totalAdded:0,totalWithdrawn:0};
+  const tx=[];let inData=false;
+  for(const row of raw){
+    const c0=String(row[0]||'').trim(),c1=String(row[1]||'').trim();
+    if(c0==='Lender Name')s.lenderName=c1;
+    else if(c0==='Lender ID')s.lenderId=c1;
+    else if(c0==='From Date')s.fromDate=c1;
+    else if(c0==='To Date')s.toDate=c1;
+    else if(c0==='Total Add Fund')s.totalAdded=parseRupee(c1);
+    else if(c0==='Fund Withdrawn')s.totalWithdrawn=parseRupee(c1);
+    else if(c0==='Date'&&String(row[2]||'').includes('Type')){inData=true;continue;}
+    if(inData&&row[0]&&c0!=='Date'){
+      const dr=row[0];let ds='';
+      if(typeof dr==='number'){const d=XLSX.SSF.parse_date_code(dr);ds=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;}
+      else ds=String(dr).split(' ')[0];
+      tx.push({date:ds,type:String(row[2]||'').trim(),credit:parseRupee(row[3]),debit:parseRupee(row[4])});
+    }
+  }
+  return{summary:s,transactions:tx};
+}
+function parseManualLending(wb){
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const ml={disbursedAmount:0,totalReceived:0,principalReceived:0,interestReceived:0,npaAmount:0,platformFee:0,principalOutstanding:0};
+  const loans=[];let hr=-1;
+  for(let i=0;i<raw.length;i++){
+    const row=raw[i],c0=String(row[0]||'').trim(),c1=String(row[1]||'').trim();
+    if(c0==='Disbursed Amount')ml.disbursedAmount=parseRupee(c1);
+    else if(c0==='Total Amount Received')ml.totalReceived=parseRupee(c1);
+    else if(c0==='Principal Received')ml.principalReceived=parseRupee(c1);
+    else if(c0==='Interest Received')ml.interestReceived=parseRupee(c1);
+    else if(c0==='NPA Amount')ml.npaAmount=parseRupee(c1);
+    else if(c0==='Platform Fee')ml.platformFee=parseRupee(c1);
+    else if(c0==='Principal Outstanding Amount')ml.principalOutstanding=parseRupee(c1);
+    if(row.some(v=>String(v||'').includes('Disbursement Date'))){hr=i;continue;}
+    if(hr>=0&&i>hr){
+      const dd=row[2]?String(row[2]).trim():null;
+      if(!dd||dd==='null')continue;
+      loans.push({disbDate:dd,amount:parseRupee(row[3]),received:parseRupee(row[7]),principal:parseRupee(row[8]),
+        interest:parseRupee(row[9]),npa:parseRupee(row[12]),status:String(row[13]||'ACTIVE').trim(),
+        closureDate:String(row[14]||''),dpd:parseRupee(row[15]),interestRate:parseRupee(row[16]),
+        tenure:parseRupee(row[17]),score:parseRupee(row[18])});
+    }
+  }
+  return{mlSummary:ml,loans};
+}
+
+// ─── FILE HANDLING
+function readXlsx(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>{try{res(XLSX.read(e.target.result,{type:'array'}));}catch(err){rej(err);}};r.onerror=rej;r.readAsArrayBuffer(f);});}
+el('acc-input').onchange=function(e){accFile=e.target.files[0];if(accFile){el('acc-drop').classList.add('has-file');el('acc-icon').textContent='✅';el('acc-name').textContent=accFile.name;}updateBtn();};
+el('ml-input').onchange=function(e){mlFile=e.target.files[0];if(mlFile){el('ml-drop').classList.add('has-file');el('ml-icon').textContent='✅';el('ml-name').textContent=mlFile.name;}updateBtn();};
+function updateBtn(){const b=el('load-btn');if(accFile&&mlFile)b.classList.add('ready');else b.classList.remove('ready');}
+async function loadDashboard(){
+  if(!accFile||!mlFile){showErr('Dono files select karo pehle.');return;}
+  el('load-btn').textContent='Parsing...';el('upload-error').style.display='none';
+  try{
+    const[aw,mw]=await Promise.all([readXlsx(accFile),readXlsx(mlFile)]);
+    const{summary,transactions}=parseAccountStatement(aw);
+    const{mlSummary,loans}=parseManualLending(mw);
+    const waText=el('wa-input')?el('wa-input').value:'';
+    const waInterest=parseWhatsAppMessages(waText);
+    APP={summary,transactions,mlSummary,loans,waInterest};
+    renderDashboard();
+    el('upload-screen').style.display='none';
+    el('dashboard-screen').style.display='block';
+    window.scrollTo(0,0);
+  }catch(err){showErr('Parse error: '+err.message);}
+  el('load-btn').textContent='Dashboard Load Karo →';
+}
+function showErr(m){const e=el('upload-error');e.textContent=m;e.style.display='block';}
+function resetDashboard(){
+  el('dashboard-screen').style.display='none';el('upload-screen').style.display='flex';
+  accFile=mlFile=null;
+  ['acc-drop','ml-drop'].forEach(id=>el(id).classList.remove('has-file'));
+  el('acc-icon').textContent='📄';el('ml-icon').textContent='📊';
+  el('acc-name').textContent=el('ml-name').textContent='Tap karke .xlsx select karo';
+  if(el('wa-input')) el('wa-input').value='';
+  updateBtn();switchTab('overview',document.querySelector('.tab-btn'));
+}
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');el('tab-'+name).classList.add('active');
+}
+
+// ─── XIRR CALCULATION
+function calcXIRR(transactions, mlSummary){
+  // Only MANUAL LENDING = actual cash out (negative cashflow)
+  // MANUAL REPAYMENT TRANSFER = cash received (positive cashflow)
+  // ADD MONEY = wallet top-up, NOT a direct lending outflow
+  const cfs=[];
+  transactions.forEach(t=>{
+    let d;
+    try{ d=new Date(t.date); } catch(e){ return; }
+    if(isNaN(d.getTime())) return;
+    if(t.type==='MANUAL LENDING'&&t.debit>0)
+      cfs.push({d,v:-Math.abs(t.debit)});
+    else if(t.type==='MANUAL REPAYMENT TRANSFER'&&t.credit>0)
+      cfs.push({d,v:Math.abs(t.credit)});
+  });
+  // Terminal value: outstanding principal as future inflow (today)
+  const terminal=(mlSummary.principalOutstanding||0);
+  if(terminal>0) cfs.push({d:new Date(),v:terminal});
+  if(cfs.length<2) return null;
+  const hasOut=cfs.some(c=>c.v<0);
+  const hasIn=cfs.some(c=>c.v>0);
+  if(!hasOut||!hasIn) return null;
+  cfs.sort((a,b)=>a.d-b.d);
+  const t0=cfs[0].d;
+  const DAYS=1000*60*60*24*365.25;
+  const totalOut=cfs.filter(c=>c.v<0).reduce((s,c)=>s+Math.abs(c.v),0);
+  function npv(r){
+    return cfs.reduce((s,cf)=>{
+      const t=(cf.d-t0)/DAYS;
+      return s+cf.v/Math.pow(1+r,t);
+    },0);
+  }
+  function dnpv(r){
+    return cfs.reduce((s,cf)=>{
+      const t=(cf.d-t0)/DAYS;
+      return s-t*cf.v/Math.pow(1+r,t+1);
+    },0);
+  }
+  // Newton-Raphson: multiple starting points
+  let best=null, bestResidual=Infinity;
+  const starts=[0.05,0.10,0.15,0.20,0.30,0.40,0.50,0.80,1.0];
+  for(const s of starts){
+    let r=s;
+    for(let i=0;i<500;i++){
+      const n=npv(r),dn=dnpv(r);
+      if(!isFinite(n)||!isFinite(dn)||Math.abs(dn)<1e-15) break;
+      const nr=r-n/dn;
+      if(Math.abs(nr-r)<1e-10){r=nr;break;}
+      r=nr;
+      if(r<-0.9999) r=0.001;
+      if(r>200) r=1.0;
+    }
+    const residual=Math.abs(npv(r));
+    if(isFinite(r)&&r>-1&&residual<totalOut*0.001&&residual<bestResidual){
+      best=r; bestResidual=residual;
+    }
+  }
+  // Bisection fallback
+  if(best===null){
+    let a=-0.999,b=100;
+    const na=npv(a),nb=npv(b);
+    if(isFinite(na)&&isFinite(nb)&&na*nb<0){
+      for(let i=0;i<300;i++){
+        const mid=(a+b)/2;
+        if(npv(a)*npv(mid)<=0) b=mid; else a=mid;
+        if(b-a<1e-7){best=mid;break;}
+      }
+    }
+  }
+  if(best===null||!isFinite(best)||best<=-1) return null;
+  return best*100;
+}
+
+// ─── STAT CARD
+function statCard(label,value,sub,type){
+  return`<div class="stat-card ${type}"><div class="stat-label">${esc(label)}</div><div class="stat-value">${value}</div><div class="stat-sub">${esc(sub)}</div></div>`;
+}
+
+function toggleMonthHistory(){
+  const body=el('ov-mh-body'),chev=el('ov-mh-chevron');
+  if(!body||!chev) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  chev.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+
+// ─── MAIN RENDER
+function renderDashboard(){
+  const{summary,transactions,mlSummary,loans}=APP;
+  const active=loans.filter(l=>l.status==='ACTIVE');
+  const closed=loans.filter(l=>l.status==='CLOSED');
+  const npaLoans=loans.filter(l=>l.npa>0||l.status==='NPA');
+  const dpdLoans=loans.filter(l=>l.dpd>0&&l.status!=='NPA');
+  const avgRate=loans.length?loans.reduce((s,l)=>s+l.interestRate,0)/loans.length:0;
+  const netProfit=mlSummary.interestReceived;
+  // Weighted ROI: har loan ka (interest/principal) × (365/actual_days) — phir principal-weighted avg
+  function calcWeightedROI(loans){
+    const today=new Date();
+    let wSum=0, wTot=0;
+    loans.forEach(l=>{
+      if(!l.amount||l.amount<=0) return;
+      // Parse disbDate
+      let d0;
+      if(l.disbDate&&l.disbDate.includes('/')){const p=l.disbDate.split('/');d0=new Date(+p[2],+p[1]-1,+p[0]);}
+      else if(l.disbDate){const p=l.disbDate.split('-');d0=new Date(+p[0],+p[1]-1,+p[2]);}
+      if(!d0||isNaN(d0.getTime())) return;
+      // End date: closure date for closed loans, today for active
+      let d1=today;
+      if((l.status==='CLOSED'||l.closureDate)&&l.closureDate){
+        const cp=l.closureDate.includes('/')?l.closureDate.split('/'):l.closureDate.split('-');
+        const cd=l.closureDate.includes('/')?new Date(+cp[2],+cp[1]-1,+cp[0]):new Date(+cp[0],+cp[1]-1,+cp[2]);
+        if(!isNaN(cd.getTime())) d1=cd;
+      }
+      const days=Math.max(1,(d1-d0)/(1000*60*60*24));
+      const intEarned=l.interest||0;
+      // Annualized ROI for this loan
+      const loanROI=(intEarned/l.amount)*(365/days)*100;
+      wSum+=loanROI*l.amount;
+      wTot+=l.amount;
+    });
+    return wTot>0?wSum/wTot:0;
+  }
+  const roiPct=calcWeightedROI(loans);
+  const xirrVal=calcXIRR(transactions,mlSummary);
+  const xirrStr=xirrVal!==null?fmtP(xirrVal):'—';
+  const npaRate=mlSummary.disbursedAmount>0?(mlSummary.npaAmount/mlSummary.disbursedAmount)*100:0;
+  const sc=loans.filter(l=>l.score>0);
+  const avgScore=sc.length?Math.round(sc.reduce((s,l)=>s+l.score,0)/sc.length):0;
+  const idleCash=Math.max(0,mlSummary.totalReceived-mlSummary.disbursedAmount+summary.totalAdded-summary.totalWithdrawn);
+
+  // Header badge
+  el('hdr-sub').textContent=(summary.lenderName||'—')+' · '+(summary.lenderId||'—');
+  const hb=el('hdr-badge');
+  if(npaLoans.length>0){hb.className='badge badge-red';hb.textContent='NPA: '+npaLoans.length;}
+  else if(dpdLoans.length>0){hb.className='badge badge-yellow';hb.textContent='DPD: '+dpdLoans.length;}
+  else{hb.className='badge badge-green';hb.textContent='✓ 0% NPA';}
+  el('npa-tab-btn').classList.toggle('alert',npaLoans.length>0||dpdLoans.length>0);
+
+  // Repay map
+  const rm={};
+  transactions.filter(t=>t.type==='MANUAL REPAYMENT TRANSFER').forEach(t=>{rm[t.date]=(rm[t.date]||0)+t.credit;});
+
+  // ── OVERVIEW
+  el('ov-r1').innerHTML=
+    statCard('Disbursed',fmtK(mlSummary.disbursedAmount),(summary.fromDate||'—')+' → '+(summary.toDate||'—'),'accent')+
+    statCard('Outstanding',fmtK(mlSummary.principalOutstanding),'Active principal','normal')+
+    statCard('Received',fmtK(mlSummary.totalReceived),'Principal + interest','normal');
+  el('ov-r2').innerHTML=
+    statCard('Net Profit',fmt(netProfit),'LDC ne already deduct kiya','good')+
+    statCard('NPA Amount',fmt(mlSummary.npaAmount),fmtP(npaRate)+' of disbursed',mlSummary.npaAmount>0?'warn':'normal')+
+    statCard('XIRR (Annualized)',xirrStr,'Time-weighted return','good')+statCard('Lifetime Monthly ROI',fmtP(roiPct/12),'Per-loan avg, all-time','normal');
+  // ROI/XIRR formula info box
+  const totalDays=mlSummary.disbursedAmount>0?Math.round((new Date()-new Date(summary.fromDate&&summary.fromDate.includes('/')?summary.fromDate.split('/').reverse().join('-'):summary.fromDate||new Date()))/(1000*60*60*24)):'—';
+  const roiInfoEl=document.getElementById('roi-formula-info');
+  if(roiInfoEl){roiInfoEl.innerHTML=`
+    <b>How these are calculated:</b><br>
+    📐 <b>XIRR ${xirrStr}</b> — Each lending outflow = negative cashflow. Each repayment + outstanding principal = positive cashflow. Newton-Raphson solves annualized rate where NPV=0.<br>
+    📊 <b>Lifetime Monthly ROI ${fmtP(roiPct/12)}</b> — Per loan: (Interest earned ÷ Principal) × (365 ÷ Days active) ÷ 12. Weighted average by principal across all ${loans.length} loans (all-time), shown as a non-annualized monthly rate.<br>
+    💰 <b>Month-by-month interest</b> — LDC's reports don't itemize interest per transaction or per month, only lifetime-cumulative per loan. If you pasted WhatsApp repayment messages (✓ marked), that month's interest is exact, straight from LDC's own daily breakup. Any remaining months are estimated by splitting the real total interest (₹${mlSummary.interestReceived.toFixed(2)}) in proportion to repayment cash flow timing.<br>
+    💵 <b>Monthly % / Ann. ROI</b> — Interest earned that month ÷ total NEW capital disbursed that month, ×100 for Monthly %, ×12 for Annualized. So if you put in ₹11,000 in May and earned ₹107.73 that month, Monthly % = 0.98%, Ann. ROI ≈ 11.8%. (If a month has zero new disbursement, it falls back to average deployed balance so the number isn't undefined.)<br>
+    💰 <b>"Disbursed" on month cards</b> — total NEW capital you put in during that calendar month (sum of loans created that month). This is the denominator used for Monthly %/Ann. ROI above.<br>
+    ⏱ Portfolio age: ~${totalDays} days. XIRR is annualized; Monthly ROI is the equivalent monthly rate (annualized ÷ 12).
+  `;}
+
+  // Status
+  el('ov-status').innerHTML=[
+    {l:'Active',c:active.length,color:'#0ea5e9',bg:'#eff6ff'},{l:'Closed',c:closed.length,color:'#8b5cf6',bg:'#f5f3ff'},
+    {l:'DPD',c:dpdLoans.length,color:'#d97706',bg:'#fffbeb'},{l:'NPA',c:npaLoans.length,color:'#ef4444',bg:'#fef2f2'},
+  ].map(s=>`<div class="status-item" style="background:${s.bg}">
+    <div class="status-count" style="color:${s.color}">${s.c}</div>
+    <div class="status-lbl">${s.l}</div>
+    <div class="progress-bg" style="height:3px;margin-top:6px"><div class="progress-fill" style="height:3px;background:${s.color};width:${loans.length?Math.min(100,(s.c/loans.length)*100):0}%"></div></div>
+  </div>`).join('');
+
+  // Rate dist
+  const bk={'≤40%':0,'40-43%':0,'43-46%':0,'46-48%':0,'>48%':0};
+  loans.forEach(l=>{const r=l.interestRate;if(r<=40)bk['≤40%']++;else if(r<=43)bk['40-43%']++;else if(r<=46)bk['43-46%']++;else if(r<=48)bk['46-48%']++;else bk['>48%']++;});
+  const colors=['#6366f1','#0ea5e9','#06b6d4','#10b981','#8b5cf6'];
+  el('ov-rates').innerHTML=Object.entries(bk).filter(([,v])=>v>0).map(([k,v],i)=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:#475569;font-weight:500">${k} p.a.</span>
+        <span style="font-size:12px;color:#1a2332;font-weight:700">${v} loans</span>
+      </div>
+      <div class="progress-bg" style="height:8px"><div class="progress-fill" style="height:8px;background:${colors[i%colors.length]};width:${loans.length?(v/loans.length)*100:0}%;border-radius:99px"></div></div>
+    </div>`).join('');
+  el('ov-rate-footer').innerHTML=`<span style="color:#475569;font-weight:500">Avg: <b style="color:#0ea5e9">${avgRate.toFixed(2)}%</b></span> &nbsp;·&nbsp; <span>${loans.length} loans</span> &nbsp;·&nbsp; <span>Avg Score: <b style="color:#8b5cf6">${avgScore}</b></span>`;
+
+  // Line chart — repayment trend
+  window._repayMap=rm; // store for period switching
+  renderRepayLineChart(rm, 1);
+
+  renderAnalytics(loans,transactions,rm);
+  // Month-wise ROI breakdown — anchored to the REAL current month, not just last array entry
+  if(_roiRows&&_roiRows.length){
+    const now=new Date();
+    const curKey=now.toISOString().slice(0,7);
+    const mLabel=m=>{const[y,mo]=m.split('-');return new Date(+y,+mo-1,1).toLocaleString('en-IN',{month:'short',year:'2-digit'});};
+    const capInt=r=>`${fmtK(r.newCapital||0)} disbursed · ${fmtK(r.intEstimate||0)} int${r.isExact?' ✓':''}`;
+    let thisRow=_roiRows.find(r=>r.m===curKey);
+    // If current month has no data yet (no deployed capital row generated), show 0% instead of silently
+    // falling back to a stale earlier month so the label always matches the real calendar month.
+    if(!thisRow){thisRow={m:curKey,monthlyPctOnDisbursed:0,annPctOnDisbursed:0,avgDeployed:0,newCapital:0,intEstimate:0};}
+    const sorted=[..._roiRows].sort((a,b)=>a.m.localeCompare(b.m));
+    const prevRow=sorted.filter(r=>r.m<curKey).slice(-1)[0]||null;
+    const overallMonthlyPct=_roiRows.reduce((s,r)=>s+r.monthlyPctOnDisbursed,0)/_roiRows.length;
+    const totalIntAll=_roiRows.reduce((s,r)=>s+(r.intEstimate||0),0);
+    el('ov-r3').innerHTML=
+      statCard('This Month',fmtP(thisRow.monthlyPctOnDisbursed),`${mLabel(thisRow.m)} · ${capInt(thisRow)}`,'accent')+
+      (prevRow?statCard('Last Month',fmtP(prevRow.monthlyPctOnDisbursed),`${mLabel(prevRow.m)} · ${capInt(prevRow)}`,'normal'):'')+
+      statCard('Overall Avg',fmtP(overallMonthlyPct),`${_roiRows.length} months · ${fmtK(totalIntAll)} total int`,'normal');
+    // Full past-months list, newest first, so every month's ROI is visible without switching tabs
+    const histRows=sorted.slice().reverse();
+    el('ov-month-history').innerHTML=`
+      <div id="ov-mh-header" onclick="toggleMonthHistory()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:14px">
+        <div class="section-title" style="margin-bottom:0">Month-by-Month ROI History (${histRows.length})</div>
+        <span id="ov-mh-chevron" style="color:#94a3b8;font-size:11px;transition:transform 0.2s;display:inline-block">▼</span>
+      </div>
+      <div id="ov-mh-body" style="display:none">
+      <table class="mret-table">
+        <thead><tr><th>Month</th><th style="color:#0369a1">Disbursed</th><th style="color:#059669">Interest</th><th style="color:#6366f1">Monthly %</th><th style="color:#0369a1">Ann. ROI</th></tr></thead>
+        <tbody>
+        ${histRows.map(r=>{
+          const mp=r.monthlyPctOnDisbursed.toFixed(2);
+          const color=r.annPctOnDisbursed>=40?'#10b981':r.annPctOnDisbursed>=25?'#0ea5e9':'#f59e0b';
+          const tag=r.isExact?' <span style="color:#10b981;font-size:9px" title="Exact from WhatsApp data">✓</span>':'';
+          return `<tr><td style="font-weight:700;color:#475569">${mLabel(r.m)}</td><td style="color:#0369a1;font-weight:600">${fmtK(r.newCapital||0)}</td><td style="color:#059669;font-weight:600">${fmtK(r.intEstimate||0)}${tag}</td><td style="font-weight:700;color:${color}">${mp}%</td><td style="color:${color}">${r.annPctOnDisbursed.toFixed(1)}%</td></tr>`;
+        }).join('')}
+        </tbody>
+      </table>
+      </div>`;
+    // Reinvestment breakdown — how much of each month's disbursement came from that month's
+    // own repayments flowing back in (recycled) vs genuinely fresh capital. Approximate, since
+    // we don't have a bank statement to trace the exact rupee path.
+    el('ov-reinvest').innerHTML=`
+      <div class="section-title">Reinvestment: Recycled vs Fresh Capital</div>
+      <div style="font-size:10px;color:#94a3b8;margin-bottom:12px;margin-top:-6px">Approximate — based on comparing each month's repayments received to capital disbursed</div>
+      ${sorted.slice().reverse().map(r=>{
+        const total=r.recycledCapital+r.freshCapital;
+        const recycledPct=total>0?(r.recycledCapital/total)*100:0;
+        return `<div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#475569;margin-bottom:5px">
+            <span>${mLabel(r.m)}</span>
+            <span>${fmtK(total)} total</span>
+          </div>
+          <div style="display:flex;height:18px;border-radius:6px;overflow:hidden;background:#f1f5f9">
+            <div style="width:${recycledPct}%;background:#8b5cf6" title="Recycled"></div>
+            <div style="width:${100-recycledPct}%;background:#0ea5e9" title="Fresh"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:4px">
+            <span>🔄 Recycled: ${fmtK(r.recycledCapital)}</span>
+            <span>💵 Fresh: ${fmtK(r.freshCapital)}</span>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }else{
+    el('ov-r3').innerHTML='';
+    el('ov-month-history').innerHTML='';
+    el('ov-reinvest').innerHTML='';
+  }
+  renderLoans(loans,active,closed,npaLoans,dpdLoans);
+  renderNPA(mlSummary,npaLoans,dpdLoans,npaRate);
+  renderCashflow(loans,transactions,mlSummary,idleCash);
+  renderPlanner(mlSummary,loans);
+  renderTransactions(transactions);
+  renderInsights(mlSummary,netProfit,roiPct,xirrStr,avgScore,npaRate,loans,dpdLoans,npaLoans);
+}
+
+// ── ANALYTICS
+// ── MONTHLY ROI ON DEPLOYED CAPITAL
+let _roiRows=[];
+
+function renderMonthlyROI(loans, transactions){
+  function parseDate(s){
+    if(!s) return null;
+    if(s.includes('/')){const p=s.split('/');return new Date(+p[2],+p[1]-1,+p[0]);}
+    const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);
+  }
+  const today=new Date();
+  const todayKey=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+
+  // Build month list from first disbDate to today (always include current calendar month)
+  let minDate=new Date();
+  loans.forEach(l=>{const d=parseDate(l.disbDate);if(d&&d<minDate)minDate=d;});
+  const months=[];
+  let cur=new Date(minDate.getFullYear(),minDate.getMonth(),1);
+  const curMonthAnchor=new Date(today.getFullYear(),today.getMonth(),1);
+  while(cur<=curMonthAnchor){
+    months.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0'));
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  if(!months.includes(todayKey)) months.push(todayKey); // safety net: never silently drop the current month
+
+  // Repayment credits received per month — this IS real, exact transaction data (date + amount).
+  // It mixes principal+interest per transaction (the statement doesn't split them), so when no
+  // WhatsApp data is available we use it only as an ALLOCATION WEIGHT — not as the interest figure.
+  const txByMonth={};
+  let txTotal=0;
+  transactions.filter(t=>t.type==='MANUAL REPAYMENT TRANSFER'&&t.credit>0)
+    .forEach(t=>{const m=t.date.slice(0,7);txByMonth[m]=(txByMonth[m]||0)+t.credit;txTotal+=t.credit;});
+
+  // Real, exact total interest actually received (from LDC's own per-loan figures, NOT a model).
+  const realInterestTotal=loans.reduce((s,l)=>s+(l.interest||0),0);
+
+  // WhatsApp data: exact day-level interest, parsed from pasted repayment messages.
+  // {'YYYY-MM-DD': {principal, interest}}
+  const waInterest=APP.waInterest||{};
+  const waDates=Object.keys(waInterest);
+  // Sum of WhatsApp-covered interest, split into the months it actually falls in.
+  const waInterestByMonth={};
+  let waInterestTotal=0;
+  waDates.forEach(d=>{
+    const m=d.slice(0,7);
+    waInterestByMonth[m]=(waInterestByMonth[m]||0)+waInterest[d].interest;
+    waInterestTotal+=waInterest[d].interest;
+  });
+  // Remaining interest not covered by WhatsApp data, to be allocated via the proxy method
+  // for months that have no (or partial) WhatsApp coverage.
+  const uncoveredInterestTotal=Math.max(0,realInterestTotal-waInterestTotal);
+  // Transaction credit total for ONLY the days not covered by WhatsApp (so the proxy weight
+  // doesn't double count days we already have exact data for).
+  let uncoveredTxTotal=0;
+  const uncoveredTxByMonth={};
+  transactions.filter(t=>t.type==='MANUAL REPAYMENT TRANSFER'&&t.credit>0&&!waInterest[t.date])
+    .forEach(t=>{const m=t.date.slice(0,7);uncoveredTxByMonth[m]=(uncoveredTxByMonth[m]||0)+t.credit;uncoveredTxTotal+=t.credit;});
+
+  // Deployed capital per month (for the "capital deployed" figure shown) — this part IS a fair
+  // model since it's just "principal outstanding during this window", not an interest guess.
+  _roiRows=months.map(m=>{
+    const[my,mm]=m.split('-').map(Number);
+    const mStart=new Date(my,mm-1,1); // local-time construction, no UTC ambiguity
+    const mEnd=new Date(my,mm,0);
+    const effectiveEnd=new Date(Math.min(mEnd.getTime(),today.getTime()));
+    const effectiveDays=(effectiveEnd-mStart)/(1000*60*60*24)+1;
+
+    let deployedSum=0,newCapital=0;
+    loans.forEach(l=>{
+      if(!l.amount||l.amount<=0) return;
+      const d0=parseDate(l.disbDate); if(!d0) return;
+      let d1=today;
+      if(l.closureDate){const cd=parseDate(l.closureDate);if(cd&&!isNaN(cd.getTime()))d1=cd;}
+      const oStart=new Date(Math.max(d0.getTime(),mStart.getTime()));
+      const oEnd=new Date(Math.min(d1.getTime(),effectiveEnd.getTime()));
+      if(oStart>oEnd) return;
+      const activeDays=Math.max(0,(oEnd-oStart)/(1000*60*60*24)+1);
+      deployedSum+=l.amount*activeDays;
+      // Total NEW capital actually disbursed in this calendar month (not time-weighted)
+      if(d0>=mStart&&d0<=effectiveEnd) newCapital+=l.amount;
+    });
+    const avgDeployed=effectiveDays>0?deployedSum/effectiveDays:0;
+    if(avgDeployed<=0) return null;
+
+    // Interest for this month = exact WhatsApp-covered amount + proxy-allocated share of
+    // whatever interest isn't covered by WhatsApp data (so totals always reconcile to the
+    // real, verified lifetime interest figure).
+    const exactInterest=waInterestByMonth[m]||0;
+    const uncoveredShare=uncoveredTxTotal>0?(uncoveredTxByMonth[m]||0)/uncoveredTxTotal:0;
+    const proxyInterest=uncoveredInterestTotal*uncoveredShare;
+    const intEstimate=exactInterest+proxyInterest;
+    const isExact=exactInterest>0&&proxyInterest===0; // fully WhatsApp-covered month
+
+    const monthlyIntPct=avgDeployed>0?(intEstimate/avgDeployed)*100:0;
+    const annFactor=365/effectiveDays;
+    const estAnnPct=monthlyIntPct*annFactor;
+    const totalReceived=txByMonth[m]||0;
+
+    // ROI on capital actually DEPLOYED (disbursed) that month — what the person asked for.
+    // Uses newCapital as the base; if no new capital went out this month (e.g. a month with
+    // zero fresh lending but old loans still earning), fall back to avgDeployed so it's never
+    // divide-by-zero / infinite.
+    const capBase=newCapital>0?newCapital:avgDeployed;
+    const monthlyPctOnDisbursed=capBase>0?(intEstimate/capBase)*100:0;
+    const annPctOnDisbursed=monthlyPctOnDisbursed*12;
+
+    // Reinvestment estimate: how much of this month's disbursement was likely funded by
+    // this month's own repayments coming back in, vs genuinely fresh capital. This is an
+    // approximation (we don't have your bank statement to trace the actual rupee flow) —
+    // capped at min(disbursed, repayment received) so it never exceeds either figure.
+    const recycledCapital=Math.min(newCapital,totalReceived);
+    const freshCapital=Math.max(0,newCapital-recycledCapital);
+
+    return{m, avgDeployed, newCapital, intEstimate, estAnnPct, actAnnPct:null, totalReceived, actualInterest:intEstimate, isExact, monthlyPctOnDisbursed, annPctOnDisbursed, recycledCapital, freshCapital};
+  }).filter(r=>r&&r.avgDeployed>0);
+
+  renderROIDualGraph(_roiRows);
+  renderROITable(_roiRows);
+  renderMonthlyReturnTable(_roiRows);
+}
+
+function renderMonthlyReturnTable(rows){
+  const wrap=document.getElementById('monthly-return-table');
+  if(!wrap||!rows.length) return;
+  const totalInt=rows.reduce((s,r)=>s+r.intEstimate,0);
+  const avgROI=rows.reduce((s,r)=>s+r.estAnnPct,0)/rows.length;
+  wrap.innerHTML=`
+  <table class="mret-table">
+    <thead><tr>
+      <th>Month</th>
+      <th>Avg Capital</th>
+      <th style="color:#059669">Interest Earned</th>
+      <th style="color:#6366f1">Monthly %</th>
+      <th style="color:#0369a1">Ann. ROI</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r=>{
+      const cap=r.avgDeployed>=1000?(r.avgDeployed/1000).toFixed(1)+'K':r.avgDeployed.toFixed(0);
+      const intAmt=r.intEstimate>=1000?(r.intEstimate/1000).toFixed(2)+'K':r.intEstimate.toFixed(0);
+      const monthlyPct=(r.estAnnPct/12).toFixed(2);
+      const color=r.estAnnPct>=40?'#10b981':r.estAnnPct>=25?'#0ea5e9':'#f59e0b';
+      const bg=r.estAnnPct>=40?'#d1fae5':r.estAnnPct>=25?'#e0f2fe':'#fef3c7';
+      return `<tr>
+        <td style="font-weight:700;color:#475569">${r.m}</td>
+        <td style="color:#0369a1;font-weight:600">₹${cap}</td>
+        <td style="color:#059669;font-weight:700">₹${intAmt}</td>
+        <td style="font-weight:700;color:${color}">${monthlyPct}%</td>
+        <td><span style="background:${bg};color:${color};padding:2px 7px;border-radius:20px;font-weight:700;font-size:11px">${r.estAnnPct.toFixed(1)}%</span></td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">
+    <span style="font-size:11px;color:#059669;font-weight:700">Total earned: ₹${totalInt>=1000?(totalInt/1000).toFixed(2)+'K':totalInt.toFixed(0)}</span>
+    <span style="font-size:11px;color:#6366f1;font-weight:700">Avg ROI: ${avgROI.toFixed(1)}% p.a.</span>
+  </div>`;
+}
+
+function renderROIDualGraph(rows){
+  const wrap=document.getElementById('roi-dual-graph');
+  if(!wrap||!rows.length) return;
+  const W=360,H=110,PAD={l:32,r:8,t:10,b:22};
+  const gW=W-PAD.l-PAD.r, gH=H-PAD.t-PAD.b;
+  const n=rows.length;
+  const estVals=rows.map(r=>r.estAnnPct);
+  const actVals=rows.map(r=>r.actAnnPct!==null?r.actAnnPct:null);
+  const allVals=[...estVals,...actVals.filter(v=>v!==null)];
+  const maxV=Math.max(...allVals,1);
+  const minV=0;
+  function px(i){return PAD.l+(i/Math.max(n-1,1))*gW;}
+  function py(v){return PAD.t+gH-((v-minV)/(maxV-minV||1))*gH;}
+
+  // Y axis labels
+  const yLabels=[0,Math.round(maxV/2),Math.round(maxV)].map(v=>
+    `<text x="${PAD.l-4}" y="${py(v)+3}" text-anchor="end" font-size="8" fill="#94a3b8">${v}%</text>`
+  ).join('');
+
+  // Estimated line (purple, dashed)
+  const estPts=rows.map((r,i)=>`${px(i).toFixed(1)},${py(r.estAnnPct).toFixed(1)}`).join(' ');
+  const estArea=`M${px(0).toFixed(1)},${py(0)} `+rows.map((r,i)=>`L${px(i).toFixed(1)},${py(r.estAnnPct).toFixed(1)}`).join(' ')+` L${px(n-1).toFixed(1)},${py(0)} L${px(0).toFixed(1)},${py(0)} Z`;
+
+  // Actual line (green, solid) — only points where actAnnPct not null
+  const actPoints=rows.map((r,i)=>r.actAnnPct!==null?{i,v:r.actAnnPct}:null).filter(Boolean);
+  const actPts=actPoints.map(p=>`${px(p.i).toFixed(1)},${py(p.v).toFixed(1)}`).join(' ');
+
+  // X labels
+  const step=Math.ceil(n/4);
+  const xlbls=rows.map((r,i)=>i%step===0||i===n-1
+    ?`<text x="${px(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="8" fill="#94a3b8">${r.m.slice(5)}</text>`:'').join('');
+
+  // Dots — estimated
+  const estDots=rows.map((r,i)=>
+    `<circle cx="${px(i).toFixed(1)}" cy="${py(r.estAnnPct).toFixed(1)}" r="2.5" fill="#6366f1" opacity="0.7"
+      onmouseenter="showROITip(event,'${r.m}',${r.estAnnPct.toFixed(1)},null)"
+      onmouseleave="hideROITip()" ontouchstart="showROITip(event,'${r.m}',${r.estAnnPct.toFixed(1)},null)"/>`).join('');
+
+  // Dots — actual
+  const actDots=actPoints.map(p=>
+    `<circle cx="${px(p.i).toFixed(1)}" cy="${py(p.v).toFixed(1)}" r="3" fill="#10b981"
+      onmouseenter="showROITip(event,'${rows[p.i].m}',null,${p.v.toFixed(1)})"
+      onmouseleave="hideROITip()" ontouchstart="showROITip(event,'${rows[p.i].m}',null,${p.v.toFixed(1)})"/>`).join('');
+
+  wrap.innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+      <defs>
+        <linearGradient id="estGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6366f1" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#6366f1" stop-opacity="0.01"/>
+        </linearGradient>
+      </defs>
+      ${yLabels}
+      <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+gH}" stroke="#f1f5f9" stroke-width="1"/>
+      <line x1="${PAD.l}" y1="${PAD.t+gH}" x2="${W-PAD.r}" y2="${PAD.t+gH}" stroke="#f1f5f9" stroke-width="1"/>
+      <path d="${estArea}" fill="url(#estGrad)"/>
+      <polyline points="${estPts}" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" stroke-linejoin="round"/>
+      ${actPts?`<polyline points="${actPts}" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`:''}
+      ${estDots}
+      ${actDots}
+      ${xlbls}
+    </svg>
+    <div class="line-tooltip" id="roi-tip"></div>`;
+}
+
+function showROITip(e,month,est,act){
+  const tip=document.getElementById('roi-tip');
+  if(!tip) return;
+  tip.style.display='block';
+  let txt=month+': ';
+  if(est!==null) txt+='Est '+est+'%';
+  if(act!==null) txt+='Actual '+act+'%';
+  tip.textContent=txt;
+  const wrap=e.target.closest('div');
+  const rect=wrap.getBoundingClientRect();
+  tip.style.left=Math.min(e.clientX-rect.left+8, rect.width-110)+'px';
+  tip.style.top=Math.max(e.clientY-rect.top-28, 0)+'px';
+}
+function hideROITip(){const t=document.getElementById('roi-tip');if(t)t.style.display='none';}
+
+function renderROITable(rows){
+  if(!rows.length){
+    el('monthly-roi-chart').innerHTML='<div style="color:#94a3b8;text-align:center;padding:20px">Data unavailable</div>';
+    return;
+  }
+  const maxEst=Math.max(...rows.map(r=>r.estAnnPct),1);
+  const getColor=v=>v>=40?'#10b981':v>=24?'#0ea5e9':v>=10?'#f59e0b':'#ef4444';
+  const getBg   =v=>v>=40?'#d1fae5':v>=24?'#e0f2fe':v>=10?'#fef3c7':'#fee2e2';
+  const avgEst=rows.reduce((s,r)=>s+r.estAnnPct,0)/rows.length;
+  const actRows=rows.filter(r=>r.actAnnPct!==null);
+  const avgAct=actRows.length?actRows.reduce((s,r)=>s+r.actAnnPct,0)/actRows.length:null;
+
+  el('monthly-roi-chart').innerHTML=`
+  <table class="mroi-table">
+    <thead><tr>
+      <th>Month</th>
+      <th>Avg Capital</th>
+      <th>Est. Interest</th>
+      <th style="color:#6366f1">Ann. ROI</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r=>{
+      const ec=getColor(r.estAnnPct), eb=getBg(r.estAnnPct);
+      const cap=r.avgDeployed>=1000?(r.avgDeployed/1000).toFixed(1)+'K':r.avgDeployed.toFixed(0);
+      const intDisp=r.intEstimate>=1000?(r.intEstimate/1000).toFixed(2)+'K':r.intEstimate.toFixed(0);
+      return `<tr>
+        <td style="font-weight:600;color:#475569">${r.m}</td>
+        <td style="color:#0369a1;font-weight:600">₹${cap}</td>
+        <td style="color:#059669;font-weight:600">₹${intDisp}</td>
+        <td>
+          <span class="roi-pill" style="background:${eb};color:${ec}">${r.estAnnPct.toFixed(1)}%</span>
+          <div class="roi-bar-bg" style="margin-top:3px"><div class="roi-bar-fill" style="width:${Math.min(100,(r.estAnnPct/maxEst)*100)}%;background:${ec}"></div></div>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">
+    <span style="font-size:10px;color:#94a3b8">Interest allocated by real repayment timing</span>
+    <span style="font-size:10px;color:#6366f1;font-weight:700">Avg ROI: ${avgEst.toFixed(1)}% p.a.</span>
+  </div>`;
+}
+
+function renderAnalytics(loans,transactions,rm){
+  const monthMap={};
+  transactions.filter(t=>t.type==='MANUAL REPAYMENT TRANSFER').forEach(t=>{const m=t.date.slice(0,7);monthMap[m]=(monthMap[m]||0)+t.credit;});
+  const months=Object.keys(monthMap).sort().slice(-6);
+  const maxM=Math.max(...months.map(m=>monthMap[m]||0),1);
+  const totalM=months.reduce((s,m)=>s+(monthMap[m]||0),0);
+  el('monthly-chart').innerHTML=months.map(m=>{
+    const v=monthMap[m]||0;
+    return`<div class="month-col">
+      <div class="month-val">${v>0?'₹'+v.toFixed(0):''}</div>
+      <div class="month-bar" style="height:${Math.max(4,(v/maxM)*70)}px;background:linear-gradient(to top,#0ea5e9,#6366f1)"></div>
+      <div class="month-lbl">${m.slice(5)}</div>
+    </div>`;
+  }).join('');
+  el('monthly-footer-l').textContent=`${months.length} months`;
+  el('monthly-footer-r').textContent=`Total: ₹${totalM.toFixed(0)}`;
+  renderMonthlyROI(loans, transactions);
+
+  const tenures=[...new Set(loans.map(l=>l.tenure))].filter(t=>t>0).sort((a,b)=>a-b);
+  el('tenure-tabs').innerHTML=[{l:'All',v:'all'},...tenures.map(t=>({l:`${t} mo`,v:String(t)}))].map(t=>
+    `<div class="tenure-tab ${activeTenure===t.v?'active':''}" onclick="switchTenure('${t.v}',this)">${t.l}</div>`).join('');
+  renderTenureContent(loans);
+
+  const scoreBuckets=[
+    {l:'800+',min:800,max:999,c:'#10b981'},{l:'750–799',min:750,max:799,c:'#0ea5e9'},
+    {l:'700–749',min:700,max:749,c:'#6366f1'},{l:'650–699',min:650,max:699,c:'#f59e0b'},{l:'<650',min:0,max:649,c:'#ef4444'},
+  ];
+  const scoredL=loans.filter(l=>l.score>0);
+  const maxSc=Math.max(...scoreBuckets.map(b=>scoredL.filter(l=>l.score>=b.min&&l.score<=b.max).length),1);
+  el('score-dist').innerHTML=scoreBuckets.map(b=>{
+    const cnt=scoredL.filter(l=>l.score>=b.min&&l.score<=b.max).length;
+    return`<div class="score-row">
+      <div class="score-label">${b.l}</div>
+      <div class="score-bar-wrap"><div class="progress-bg" style="height:9px"><div class="progress-fill" style="height:9px;background:${b.c};width:${maxSc?(cnt/maxSc)*100:0}%"></div></div></div>
+      <div class="score-count" style="color:${b.c}">${cnt}</div>
+    </div>`;
+  }).join('');
+
+  const dateMap={};
+  loans.forEach(l=>{dateMap[l.disbDate]=(dateMap[l.disbDate]||0)+1;});
+  const topDates=Object.entries(dateMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxD=topDates[0]?topDates[0][1]:1;
+  el('concentration-risk').innerHTML=topDates.map(([d,c])=>{
+    const risk=c>30?'#ef4444':c>15?'#f59e0b':'#10b981';
+    return`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:#475569;font-weight:500">${d}</span>
+        <span style="font-size:12px;font-weight:700;color:${risk}">${c} loans</span>
+      </div>
+      <div class="progress-bg" style="height:7px"><div class="progress-fill" style="height:7px;background:${risk};width:${(c/maxD)*100}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function switchTenure(v,btn){
+  activeTenure=v;
+  document.querySelectorAll('.tenure-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderTenureContent(APP.loans);
+}
+function renderTenureContent(loans){
+  const fl=activeTenure==='all'?loans:loans.filter(l=>String(l.tenure)===activeTenure);
+  if(!fl.length){el('tenure-content').innerHTML='<div class="empty-state">No loans</div>';return;}
+  const intE=fl.reduce((s,l)=>s+l.interest,0);
+  const disbA=fl.reduce((s,l)=>s+l.amount,0);
+  const avgR=fl.reduce((s,l)=>s+l.interestRate,0)/fl.length;
+  el('tenure-content').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`+
+    [{l:'Total Loans',v:fl.length,c:'#0ea5e9'},{l:'Active',v:fl.filter(l=>l.status==='ACTIVE').length,c:'#10b981'},
+     {l:'Closed',v:fl.filter(l=>l.status==='CLOSED').length,c:'#8b5cf6'},{l:'Disbursed',v:'₹'+disbA.toFixed(0),c:'#1a2332'},
+     {l:'Interest Earned',v:'₹'+intE.toFixed(2),c:'#10b981'},{l:'Avg Rate',v:avgR.toFixed(2)+'%',c:'#f59e0b'},
+    ].map(r=>`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:11px">
+      <div style="font-size:10px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">${r.l}</div>
+      <div style="font-size:16px;font-weight:800;color:${r.c};margin-top:4px;font-family:'Inter',monospace">${r.v}</div>
+    </div>`).join('')+'</div>';
+}
+
+// ── LOANS
+function renderLoans(loans,active,closed,npaLoans,dpdLoans){
+  el('loan-filters').innerHTML=[
+    {l:'All',k:'ALL',n:loans.length},{l:'Active',k:'ACTIVE',n:active.length},
+    {l:'Closed',k:'CLOSED',n:closed.length},{l:'NPA',k:'NPA',n:npaLoans.length},{l:'DPD',k:'DPD',n:dpdLoans.length},
+  ].map(f=>`<button class="filter-btn ${activeLoanFilter===f.k?'active':''}" onclick="filterLoans('${f.k}',this)">${f.l} <span style="opacity:0.75">(${f.n})</span></button>`).join('');
+  drawLoansTable(loans);
+}
+function filterLoans(k,btn){
+  activeLoanFilter=k;
+  document.querySelectorAll('#loan-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');drawLoansTable(APP.loans);
+}
+function drawLoansTable(loans){
+  let fl=loans;
+  if(activeLoanFilter==='ACTIVE')fl=loans.filter(l=>l.status==='ACTIVE');
+  else if(activeLoanFilter==='CLOSED')fl=loans.filter(l=>l.status==='CLOSED');
+  else if(activeLoanFilter==='NPA')fl=loans.filter(l=>l.npa>0||l.status==='NPA');
+  else if(activeLoanFilter==='DPD')fl=loans.filter(l=>l.dpd>0);
+  if(!fl.length){el('loans-body').innerHTML='<div class="empty-state"><div class="empty-state-icon">📭</div>Koi loan nahi is filter mein</div>';return;}
+  el('loans-body').innerHTML=fl.map((l,i)=>{
+    const isN=l.npa>0||l.status==='NPA',isD=l.dpd>0&&!isN;
+    const rc=isN?'tr-npa':isD?'tr-dpd':i%2===0?'tr-even':'tr-odd';
+    const sb=isN?'<span class="badge badge-red">NPA</span>':l.status==='CLOSED'?'<span class="badge badge-purple">Done</span>':'<span class="badge badge-blue">Live</span>';
+    return`<div class="table-row ${rc}" style="grid-template-columns:58px 50px 50px 58px 52px 40px">
+      <div class="td">${esc(l.disbDate.slice(0,5))}</div>
+      <div class="td mono">₹${l.amount}</div>
+      <div class="td mono yellow">${l.interestRate}%</div>
+      <div class="td mono green">₹${l.received.toFixed(0)}</div>
+      <div class="td">${sb}</div>
+      <div class="td mono ${l.dpd>0?'red':'muted'}">${l.dpd>0?l.dpd+'d':'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── NPA
+function renderNPA(mlSummary,npaLoans,dpdLoans,npaRate){
+  el('npa-cards').innerHTML=
+    statCard('NPA Amount',fmt(mlSummary.npaAmount),'Principal at risk',mlSummary.npaAmount>0?'warn':'good')+
+    statCard('NPA Rate',fmtP(npaRate),'Of total disbursed',npaRate>0?'warn':'good')+
+    statCard('DPD Loans',String(dpdLoans.length),'Days past due > 0',dpdLoans.length>0?'gold':'good');
+
+  const ah=el('npa-health-alert');
+  if(mlSummary.npaAmount>0){
+    ah.className='npa-alert bad';el('npa-alert-icon').textContent='🔴';
+    el('npa-alert-title').style.color='#dc2626';el('npa-alert-title').textContent='NPA Active — Portfolio at risk';
+    el('npa-alert-sub').style.color='#ef4444';el('npa-alert-sub').textContent=`₹${mlSummary.npaAmount.toFixed(2)} (${fmtP(npaRate)}) disbursed capital mein loss`;
+  }else{
+    ah.className='npa-alert ok';el('npa-alert-icon').textContent='🟢';
+    el('npa-alert-title').style.color='#16a34a';el('npa-alert-title').textContent='Portfolio bilkul healthy hai!';
+    el('npa-alert-sub').style.color='#15803d';el('npa-alert-sub').textContent='Sab borrowers timely repayment kar rahe hain';
+  }
+
+  if(dpdLoans.length>0){
+    const a1=dpdLoans.filter(l=>l.dpd<=10).length,a2=dpdLoans.filter(l=>l.dpd>10&&l.dpd<=30).length,a3=dpdLoans.filter(l=>l.dpd>30).length;
+    const maxA=Math.max(a1,a2,a3,1);
+    el('dpd-aging-section').innerHTML=`<div class="section" style="border-color:#fde68a">
+      <div class="section-title">⏳ DPD Aging Buckets</div>
+      ${[{l:'1–10 days (Early)',c:a1,col:'#f59e0b'},{l:'11–30 days (Late)',c:a2,col:'#ef4444'},{l:'30+ days (Critical)',c:a3,col:'#dc2626'}].map(a=>`
+      <div class="aging-row">
+        <div class="aging-label">${a.l}</div>
+        <div class="aging-count" style="color:${a.col}">${a.c}</div>
+        <div class="aging-bar-wrap"><div class="progress-bg" style="height:7px"><div class="progress-fill" style="height:7px;background:${a.col};width:${(a.c/maxA)*100}%"></div></div></div>
+      </div>`).join('')}
+    </div>`;
+  }else el('dpd-aging-section').innerHTML='';
+
+  el('dpd-section').innerHTML=dpdLoans.length?`<div class="table-wrap dpd-warn">
+    <div class="sub-head dpd"><span style="color:#d97706">⚠️ Overdue Loans (${dpdLoans.length})</span></div>
+    ${dpdLoans.map(l=>`<div style="display:grid;grid-template-columns:65px 1fr 50px 52px;padding:10px 14px;border-bottom:1px solid #fef9c3;background:#fffbeb">
+      <div style="font-size:10px;color:#92400e">${esc(l.disbDate)}</div>
+      <div style="font-size:11px;color:#78350f;font-weight:500">₹${l.amount} · ${l.interestRate}% · ${l.tenure}mo</div>
+      <div style="font-size:11px;color:#dc2626;font-weight:700">${l.dpd}d</div>
+      <span class="badge badge-yellow">${esc(l.status)}</span>
+    </div>`).join('')}
+  </div>`:'';
+
+  el('npa-loans-section').innerHTML=npaLoans.length?`<div class="table-wrap npa-warn" style="margin-top:10px">
+    <div class="sub-head npa"><span style="color:#dc2626">🔴 NPA Loans (${npaLoans.length})</span></div>
+    ${npaLoans.map(l=>`<div class="npa-loan-row">
+      <div class="npa-loan-head"><span style="font-size:11px;color:#7f1d1d">${esc(l.disbDate)} · ₹${l.amount} · ${l.interestRate}% · ${l.tenure}mo</span><span class="badge badge-red">NPA ₹${l.npa.toFixed(0)}</span></div>
+      <div class="npa-loan-meta">
+        <span style="font-size:10px;color:#b91c1c">Received: ₹${l.received.toFixed(0)}</span>
+        <span style="font-size:10px;color:#b91c1c">Loss: ₹${(l.amount-l.principal).toFixed(0)}</span>
+        ${l.closureDate&&l.closureDate!=='null'?`<span style="font-size:10px;color:#b91c1c">${esc(l.closureDate)}</span>`:''}
+      </div></div>`).join('')}
+  </div>`:`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px;text-align:center;margin-top:10px">
+    <div style="font-size:28px;margin-bottom:8px">🎉</div>
+    <div style="color:#16a34a;font-size:14px;font-weight:700">No NPA loans abhi tak!</div>
+    <div style="color:#15803d;font-size:11px;margin-top:4px">Future NPA loans yahan dikhenge automatically</div></div>`;
+
+  el('risk-levels').innerHTML=[
+    {l:'Healthy',r:'< 2%',a:npaRate<2,c:'#10b981'},{l:'Caution',r:'2% – 5%',a:npaRate>=2&&npaRate<5,c:'#f59e0b'},
+    {l:'High Risk',r:'> 5%',a:npaRate>=5,c:'#ef4444'},
+  ].map(x=>`<div class="risk-row">
+    <div class="risk-left">
+      <div class="risk-dot" style="background:${x.a?x.c:'#e2e8f0'}"></div>
+      <span style="font-size:13px;font-weight:${x.a?'700':'400'};color:${x.a?x.c:'#94a3b8'}">${x.l}</span>
+      ${x.a?`<span class="badge" style="background:${x.c}15;color:${x.c};border:1px solid ${x.c}40;font-size:9px">Current</span>`:''}
+    </div>
+    <span style="font-size:12px;color:${x.a?x.c:'#cbd5e1'};font-weight:600">${x.r}</span>
+  </div>`).join('');
+  el('risk-current').innerHTML=`NPA Rate: <b style="color:#0ea5e9">${fmtP(npaRate)}</b> &nbsp;·&nbsp; Platform Fee: <b style="color:#475569">${fmt(APP.mlSummary.platformFee)}</b>`;
+}
+
+// ── CASHFLOW
+// ── REPAYMENT LINE CHART
+function switchPeriod(months, btn){
+  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRepayLineChart(window._repayMap||{}, months);
+}
+function renderRepayLineChart(rm, months){
+  // Build daily data for selected period
+  const today=new Date();
+  const allDays=Object.keys(rm).sort();
+  let filtered;
+  if(months===0){
+    filtered=allDays;
+  } else {
+    const cutoff=new Date(today);
+    cutoff.setMonth(cutoff.getMonth()-months);
+    const cutStr=cutoff.toISOString().slice(0,10);
+    filtered=allDays.filter(d=>d>=cutStr);
+  }
+  // If >60 days, aggregate by week; if >180 days, by month
+  let points=[];
+  if(filtered.length===0){
+    el('ov-daily-chart').innerHTML='<div style="color:#94a3b8;font-size:11px;text-align:center;padding:30px 0">No repayment data</div>';
+    return;
+  }
+  if(filtered.length<=60){
+    // Daily points
+    points=filtered.map(d=>({label:d.slice(5),value:rm[d]||0,full:d}));
+  } else if(filtered.length<=180){
+    // Weekly aggregation
+    const wm={};
+    filtered.forEach(d=>{
+      const dt=new Date(d);
+      const wstart=new Date(dt);
+      wstart.setDate(dt.getDate()-dt.getDay());
+      const wk=wstart.toISOString().slice(0,10);
+      wm[wk]=(wm[wk]||0)+(rm[d]||0);
+    });
+    points=Object.keys(wm).sort().map(w=>({label:w.slice(5),value:wm[w],full:w}));
+  } else {
+    // Monthly aggregation
+    const mm={};
+    filtered.forEach(d=>{mm[d.slice(0,7)]=(mm[d.slice(0,7)]||0)+(rm[d]||0);});
+    points=Object.keys(mm).sort().map(m=>({label:m.slice(5),value:mm[m],full:m}));
+  }
+  const vals=points.map(p=>p.value);
+  const maxV=Math.max(...vals,1);
+  const minV=Math.min(...vals.filter(v=>v>0),0);
+  const W=360, H=90, PAD={l:8,r:8,t:12,b:20};
+  const gW=W-PAD.l-PAD.r, gH=H-PAD.t-PAD.b;
+  const n=points.length;
+  function px(i){return PAD.l+(i/(Math.max(n-1,1)))*gW;}
+  function py(v){return PAD.t+gH-(((v-0)/(maxV-0||1))*gH);}
+  // Build polyline points
+  const pts=points.map((p,i)=>`${px(i).toFixed(1)},${py(p.value).toFixed(1)}`).join(' ');
+  // Area fill path
+  const areaPath=`M${px(0).toFixed(1)},${py(0).toFixed(1)} `+
+    points.map((p,i)=>`L${px(i).toFixed(1)},${py(p.value).toFixed(1)}`).join(' ')+
+    ` L${px(n-1).toFixed(1)},${(PAD.t+gH).toFixed(1)} L${px(0).toFixed(1)},${(PAD.t+gH).toFixed(1)} Z`;
+  // X-axis labels — show ~5 evenly
+  const labelStep=Math.ceil(n/5);
+  const xlabels=points.map((p,i)=>i%labelStep===0||i===n-1
+    ?`<text x="${px(i).toFixed(1)}" y="${H-2}" text-anchor="middle" font-size="8" fill="#94a3b8">${p.label}</text>`
+    :'').join('');
+  // Dots
+  const dots=points.map((p,i)=>`<circle cx="${px(i).toFixed(1)}" cy="${py(p.value).toFixed(1)}" r="${n<=30?3:1.5}" fill="#0ea5e9" opacity="0.8"
+    onmouseenter="showLineTip(event,'${p.full}',${p.value})" onmouseleave="hideLineTip()"
+    ontouchstart="showLineTip(event,'${p.full}',${p.value})" />`).join('');
+  // Total for period
+  const total=vals.reduce((s,v)=>s+v,0);
+  el('ov-daily-chart').innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" fill="url(#lg1)"/>
+      <polyline points="${pts}" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      ${xlabels}
+    </svg>
+    <div class="line-tooltip" id="line-tip"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span style="font-size:10px;color:#94a3b8">${n} data points</span>
+      <span style="font-size:10px;color:#10b981;font-weight:700">Total: ₹${total.toFixed(0)}</span>
+    </div>`;
+}
+function showLineTip(e,date,val){
+  const tip=document.getElementById('line-tip');
+  if(!tip)return;
+  tip.style.display='block';
+  tip.textContent=date+': ₹'+val.toFixed(0);
+  const rect=e.target.closest('.line-chart-wrap').getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  tip.style.left=Math.min(x+8,rect.width-90)+'px';
+  tip.style.top=Math.max(y-28,0)+'px';
+}
+function hideLineTip(){const t=document.getElementById('line-tip');if(t)t.style.display='none';}
+
+function renderCashflow(loans,transactions,mlSummary,idleCash){
+  el('idle-cash-section').innerHTML=`<div class="idle-card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="color:#d97706;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">💤 Idle Cash</div>
+        <div style="color:#92400e;font-size:26px;font-weight:800;font-family:'Inter',monospace">₹${idleCash.toFixed(2)}</div>
+        <div style="color:#b45309;font-size:11px;margin-top:4px">Unlent hai — redeploy karo</div>
+      </div>
+      <div style="font-size:42px">💸</div>
+    </div>
+  </div>`;
+
+  const now=new Date();
+  const calMap={};
+  loans.filter(l=>l.status==='ACTIVE').forEach(l=>{
+    let dd;
+    if(l.disbDate.includes('/')){const p=l.disbDate.split('/');dd=new Date(+p[2],+p[1]-1,+p[0]);}
+    else{const p=l.disbDate.split('-');dd=new Date(+p[0],+p[1]-1,+p[2]);}
+    if(isNaN(dd.getTime()))return;
+    const tenure=l.tenure||3;
+    for(let mo=1;mo<=tenure;mo++){
+      const rd=new Date(dd.getFullYear(),dd.getMonth()+mo,dd.getDate());
+      const diff=Math.floor((rd-now)/(1000*60*60*24));
+      if(diff>=0&&diff<=30){const key=rd.toISOString().slice(0,10);calMap[key]=(calMap[key]||0)+(l.amount/tenure);}
+    }
+  });
+
+  const startDow=now.getDay();
+  let calHTML='';
+  for(let i=0;i<startDow;i++)calHTML+=`<div class="cal-day"></div>`;
+  for(let d=0;d<31;d++){
+    const dt=new Date(now.getFullYear(),now.getMonth(),now.getDate()+d);
+    const key=dt.toISOString().slice(0,10);
+    const amt=calMap[key]||0;
+    calHTML+=`<div class="cal-day ${amt>0?'has-repay':''} ${d===0?'today':''}">
+      <div class="cal-date">${dt.getDate()}</div>
+      ${amt>0?`<div class="cal-amt">₹${amt.toFixed(0)}</div>`:''}
+    </div>`;
+  }
+  el('cashflow-cal').innerHTML=calHTML;
+
+  const expMap={};
+  loans.filter(l=>l.status==='ACTIVE').forEach(l=>{
+    let dd;
+    if(l.disbDate.includes('/')){const p=l.disbDate.split('/');dd=new Date(+p[2],+p[1]-1,+p[0]);}
+    else{const p=l.disbDate.split('-');dd=new Date(+p[0],+p[1]-1,+p[2]);}
+    if(isNaN(dd.getTime()))return;
+    const tenure=l.tenure||3;
+    for(let mo=1;mo<=tenure;mo++){
+      const rd=new Date(dd.getFullYear(),dd.getMonth()+mo,1);
+      const diff=Math.floor((rd-now)/(1000*60*60*24));
+      if(diff>=0&&diff<=95){const key=rd.toISOString().slice(0,7);expMap[key]=(expMap[key]||0)+(l.amount/tenure);}
+    }
+  });
+  const expM=Object.entries(expMap).sort((a,b)=>a[0].localeCompare(b[0])).slice(0,3);
+  el('expected-cashflow').innerHTML=expM.length?expM.map(([m,a])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #f1f5f9">
+      <div>
+        <div style="font-size:13px;color:#1a2332;font-weight:600">${m}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px">Estimated repayments</div>
+      </div>
+      <div style="font-size:16px;font-weight:800;color:#0ea5e9;font-family:'Inter',monospace">~₹${a.toFixed(0)}</div>
+    </div>`).join(''):`<div class="empty-state"><div class="empty-state-icon">📅</div>Active loans se calculate hoga</div>`;
+}
+
+// ── PLANNER
+function renderPlanner(mlSummary,loans){
+  const tc=mlSummary.principalOutstanding+mlSummary.principalReceived;
+  const ms=[
+    {l:'₹1 Lakh Corpus',t:100000,c:tc,emoji:'🎯'},
+    {l:'Guru Level (~₹5.24L)',t:524000,c:tc,emoji:'🏆'},
+    {l:'₹10 Lakh Target',t:1000000,c:tc,emoji:'🚀'},
+  ];
+  el('milestones').innerHTML=`<div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:14px">🎯 Milestone Tracker</div>`+
+  ms.map(m=>{
+    const p=Math.min(100,m.t>0?(m.c/m.t)*100:0);
+    return`<div style="margin-bottom:16px">
+      <div class="ms-header"><span class="ms-name">${m.emoji} ${m.l}</span><span class="ms-pct">${p.toFixed(1)}%</span></div>
+      <div class="progress-bg" style="height:10px"><div class="progress-fill" style="height:10px;background:linear-gradient(to right,#0ea5e9,#10b981);width:${p}%"></div></div>
+      <div class="ms-feet"><span>₹${m.c.toFixed(0)} current</span><span>Target: ₹${(m.t/1000).toFixed(0)}K</span></div>
+    </div>`;
+  }).join('');
+  // Auto-fill rate from monthly ROI if available
+  const mROI=getAvgMonthlyROI();
+  if(mROI&&mROI>0){
+    const rateEl=el('calc-rate');
+    if(rateEl&&(parseFloat(rateEl.value)===44||!rateEl.dataset.userEdited)) rateEl.value=mROI.toFixed(1);
+    const rateEl2=el('target-rate-display');
+    if(rateEl2) rateEl2.textContent=mROI.toFixed(1)+'% (Monthly ROI avg)';
+  }
+  runCalc();runTargetCalc();
+}
+
+function getAvgMonthlyROI(){
+  // Get avg annualized ROI from _roiRows — uses the same "ROI on capital disbursed" basis
+  // as the Overview cards, so the Planner's growth projections stay consistent with what
+  // the person sees there (instead of silently using the older avg-deployed-balance metric).
+  if(typeof _roiRows==='undefined'||!_roiRows||!_roiRows.length) return null;
+  const rows=_roiRows.filter(r=>r.annPctOnDisbursed>0);
+  if(rows.length) return rows.reduce((s,r)=>s+r.annPctOnDisbursed,0)/rows.length;
+  return null;
+}
+
+function getAvgMonthlyPct(){
+  // Get avg NON-annualized monthly % from _roiRows (same basis as Monthly Return table)
+  const ann=getAvgMonthlyROI();
+  return ann!==null?ann/12:null;
+}
+
+function runCalc(){
+  const monthly=parseFloat(el('calc-add').value)||0;
+  const mROI=getAvgMonthlyROI();
+  const rateEl=el('calc-rate');
+  if(mROI&&mROI>0&&!rateEl.dataset.userEdited) rateEl.value=mROI.toFixed(1);
+  const rate=parseFloat(rateEl.value)||44;
+  const rateLabel=mROI&&Math.abs(rate-mROI)<0.5?'Monthly ROI avg':'Custom';
+  const target=parseFloat(el('calc-target').value)||100000;
+  const corpus=APP.mlSummary?APP.mlSummary.principalOutstanding+APP.mlSummary.principalReceived:0;
+  const reinvest=document.getElementById('reinvest-toggle')?.checked!==false;
+  const mr=rate/100/12;
+  let bal=corpus,months=0,totalSIP=0,totalInterest=0,totalWithdrawn=0;
+  const chartPts=[{m:0,bal:corpus}];
+  while(bal<target&&months<600){
+    const interest=bal*mr;
+    totalInterest+=interest;
+    if(reinvest){bal=bal+interest+monthly;}
+    else{totalWithdrawn+=interest;bal=bal+monthly;}
+    totalSIP+=monthly;months++;
+    const step=months<=24?1:months<=60?3:6;
+    if(months%step===0) chartPts.push({m:months,bal:Math.round(bal)});
+  }
+  if(chartPts[chartPts.length-1].m!==months) chartPts.push({m:months,bal:Math.round(bal)});
+  const yrs=Math.floor(months/12);const mos=months%12;
+  const targetDate=new Date(TODAY.getFullYear(),TODAY.getMonth()+months,1);
+  el('calc-result').innerHTML=`<div class="calc-result">
+    <div class="calc-result-row"><span class="calc-result-label">Target milega</span><span class="calc-result-value" style="color:#10b981;font-size:15px">${yrs>0?yrs+'y ':''} ${mos}mo mein</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Target date</span><span class="calc-result-value">${targetDate.toLocaleDateString('en-IN',{year:'numeric',month:'short'})}</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Current corpus</span><span class="calc-result-value">&#8377;${(corpus/1000).toFixed(1)}K</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Total SIP added</span><span class="calc-result-value">&#8377;${(totalSIP/1000).toFixed(1)}K</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Est. interest earned</span><span class="calc-result-value" style="color:#10b981">&#8377;${(totalInterest/1000).toFixed(1)}K</span></div>
+    ${!reinvest?'<div class="calc-result-row"><span class="calc-result-label">Interest withdrawn</span><span class="calc-result-value" style="color:#f59e0b">&#8377;'+( totalWithdrawn/1000).toFixed(1)+'K</span></div>':''}
+    <div class="calc-result-row" style="border:none"><span class="calc-result-label">Mode</span><span class="calc-result-value" style="color:#6366f1;font-size:11px">${reinvest?'&#128260; Compound':'&#128184; Withdraw'} &middot; ${rate.toFixed(1)}% (${rateLabel})</span></div>
+  </div>`;
+  drawGrowthChart(chartPts,target,'growth-chart');
+}
+
+function drawGrowthChart(pts,target,divId){
+  const wrap=document.getElementById(divId);
+  if(!wrap||pts.length<2) return;
+  const W=340,H=120,PAD={l:36,r:8,t:8,b:20};
+  const gW=W-PAD.l-PAD.r,gH=H-PAD.t-PAD.b;
+  const maxB=Math.max(...pts.map(p=>p.bal),target);
+  const maxM=pts[pts.length-1].m;
+  function px(m){return PAD.l+(m/maxM)*gW;}
+  function py(v){return PAD.t+gH-(v/maxB)*gH;}
+  const linePts=pts.map(p=>`${px(p.m).toFixed(1)},${py(p.bal).toFixed(1)}`).join(' ');
+  const area='M'+px(0)+','+py(0)+' '+pts.map(p=>`L${px(p.m).toFixed(1)},${py(p.bal).toFixed(1)}`).join(' ')+` L${px(maxM)},${py(0)} Z`;
+  const ty=py(target);
+  const tline=ty>=PAD.t&&ty<=PAD.t+gH?`<line x1="${PAD.l}" y1="${ty.toFixed(1)}" x2="${W-PAD.r}" y2="${ty.toFixed(1)}" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,3" opacity="0.7"/><text x="${W-PAD.r-2}" y="${ty-3}" text-anchor="end" font-size="8" fill="#ef4444">Target</text>`:'';
+  const yVals=[0,target/2,target].map(v=>`<text x="${PAD.l-4}" y="${py(v)+3}" text-anchor="end" font-size="8" fill="#94a3b8">${v>=1000?(v/1000).toFixed(0)+'K':v}</text>`).join('');
+  const xStep=Math.ceil(maxM/4);
+  const xLabels=pts.filter((p,i)=>i===0||p.m%xStep===0||p.m===maxM).map(p=>`<text x="${px(p.m).toFixed(1)}" y="${H-2}" text-anchor="middle" font-size="8" fill="#94a3b8">${p.m}m</text>`).join('');
+  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/><stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/></linearGradient></defs><line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+gH}" stroke="#f1f5f9" stroke-width="1"/><line x1="${PAD.l}" y1="${PAD.t+gH}" x2="${W-PAD.r}" y2="${PAD.t+gH}" stroke="#f1f5f9" stroke-width="1"/>${yVals}${tline}<path d="${area}" fill="url(#gg)"/><polyline points="${linePts}" fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${xLabels}</svg>`;
+}
+
+function runTargetCalc(){
+  const target=parseFloat(el('target-corpus').value)||500000;
+  const monthly=parseFloat(el('target-monthly').value)||10000;
+  const mROI=getAvgMonthlyROI();
+  const rate=mROI&&mROI>0?mROI:(APP.loans&&APP.loans.length?APP.loans.reduce((s,l)=>s+l.interestRate,0)/APP.loans.length:44);
+  const rateLabel=mROI&&mROI>0?'Monthly ROI avg':'Avg interest rate';
+  const corpus=APP.mlSummary?APP.mlSummary.principalOutstanding+APP.mlSummary.principalReceived:0;
+  const reinvest=document.getElementById('reinvest-toggle2')?.checked!==false;
+  const mr=rate/100/12;
+  let bal=corpus,months=0,totalSIP=0,totalInterest=0,totalWithdrawn=0;
+  const chartPts=[{m:0,bal:corpus}];
+  while(bal<target&&months<600){
+    const interest=bal*mr;
+    totalInterest+=interest;
+    if(reinvest){bal=bal+interest+monthly;}
+    else{totalWithdrawn+=interest;bal=bal+monthly;}
+    totalSIP+=monthly;months++;
+    const step=months<=24?1:months<=60?3:6;
+    if(months%step===0) chartPts.push({m:months,bal:Math.round(bal)});
+  }
+  if(chartPts[chartPts.length-1].m!==months) chartPts.push({m:months,bal:Math.round(bal)});
+  const td=new Date(TODAY.getFullYear(),TODAY.getMonth()+months,1);
+  const yrs=Math.floor(months/12);const mos=months%12;
+  el('target-result').innerHTML=`<div class="calc-result">
+    <div class="calc-result-row"><span class="calc-result-label">&#8377;${target>=1000?(target/1000).toFixed(0)+'K':target} milega</span><span class="calc-result-value" style="color:#10b981;font-size:15px">${yrs>0?yrs+'y ':''}${mos}mo mein</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Target date</span><span class="calc-result-value">${td.toLocaleDateString('en-IN',{year:'numeric',month:'short'})}</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Current corpus</span><span class="calc-result-value">&#8377;${(corpus/1000).toFixed(1)}K</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Total SIP added</span><span class="calc-result-value">&#8377;${(totalSIP/1000).toFixed(1)}K</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Est. interest earned</span><span class="calc-result-value" style="color:#10b981">&#8377;${(totalInterest/1000).toFixed(1)}K</span></div>
+    ${!reinvest?'<div class="calc-result-row"><span class="calc-result-label">Interest withdrawn</span><span class="calc-result-value" style="color:#f59e0b">&#8377;'+(totalWithdrawn/1000).toFixed(1)+'K</span></div>':''}
+    <div class="calc-result-row" style="border:none"><span class="calc-result-label">Mode &middot; Rate</span><span class="calc-result-value" style="color:#6366f1;font-size:11px">${reinvest?'&#128260; Compound':'&#128184; Withdraw'} &middot; ${rate.toFixed(1)}% (${rateLabel})</span></div>
+  </div>
+  <div style="margin-top:14px"><div style="font-size:11px;font-weight:600;color:#475569;margin-bottom:6px">Corpus Growth Projection</div><div id="target-growth-chart" style="position:relative;width:100%;height:120px"></div></div>`;
+  setTimeout(()=>drawGrowthChart(chartPts,target,'target-growth-chart'),10);
+}
+
+
+// ── TRANSACTIONS
+function renderTransactions(transactions){
+  el('tx-filters').innerHTML=[{l:'All',v:'ALL'},{l:'Add Money',v:'ADD MONEY'},{l:'Lending',v:'MANUAL LENDING'},{l:'Repayment',v:'REPAYMENT TRANSFER'},{l:'Auto W/D',v:'AUTO WITHDRAWAL'}]
+    .map(f=>`<button class="filter-btn ${activeTxFilter===f.v?'active':''}" onclick="filterTx('${f.v}',this)">${f.l}</button>`).join('');
+  drawTxTable(transactions);
+}
+function filterTx(v,btn){
+  activeTxFilter=v;document.querySelectorAll('#tx-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');drawTxTable(APP.transactions);
+}
+function drawTxTable(transactions){
+  let fl=activeTxFilter==='ALL'?transactions:transactions.filter(t=>t.type.includes(activeTxFilter));
+  fl=fl.slice(0,60);
+  if(!fl.length){el('tx-body').innerHTML='<div class="empty-state"><div class="empty-state-icon">📭</div>Koi transaction nahi</div>';return;}
+  el('tx-body').innerHTML=fl.map((t,i)=>{
+    const tl=t.type==='ADD MONEY'?'💳 Add Money':t.type==='MANUAL LENDING'?'📤 Disbursed':t.type.includes('REPAYMENT TRANSFER')?'📥 Repayment':'🔄 Auto W/D';
+    return`<div class="table-row ${i%2===0?'tr-even':'tr-odd'}" style="grid-template-columns:60px 1fr 64px 64px">
+      <div class="td" style="color:#94a3b8">${t.date.slice(5)}</div>
+      <div class="td" style="color:#475569;font-weight:500">${tl}</div>
+      <div class="td mono right ${t.credit>0?'green':'muted'}">${t.credit>0?'+₹'+t.credit.toFixed(0):'—'}</div>
+      <div class="td mono right ${t.debit>0?'red':'muted'}">${t.debit>0?'-₹'+t.debit.toFixed(0):'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── INSIGHTS
+function renderInsights(mlSummary,netProfit,roiPct,xirrStr,avgScore,npaRate,loans,dpdLoans,npaLoans){
+  const metrics=[
+    {l:'Interest Received (Net)',v:fmt(mlSummary.interestReceived),g:true},
+    {l:'Platform Fee (FYI only)',v:fmt(mlSummary.platformFee)},
+    {l:'NPA Amount',v:fmt(mlSummary.npaAmount),w:mlSummary.npaAmount>0},
+    {l:'Capital at Work',v:fmt(mlSummary.principalOutstanding)},
+    {l:'Capital Recovered',v:fmt(mlSummary.principalReceived)},
+    {l:'XIRR (Annualized Return)',v:xirrStr,g:true},
+    {l:'Lifetime Monthly ROI',v:fmtP(roiPct/12)},
+    {l:'Total Loans',v:String(loans.length)},
+    {l:'Avg Interest Rate',v:(loans.length?loans.reduce((s,l)=>s+l.interestRate,0)/loans.length:0).toFixed(2)+'%'},
+    {l:'Avg Borrower Score',v:avgScore||'—'},
+  ];
+  el('metrics-list').innerHTML=metrics.map(m=>`<div class="metric-row">
+    <span class="metric-label">${m.l}</span>
+    <span class="metric-value ${m.w?'warn':m.g?'good':''}">${m.v}</span>
+  </div>`).join('');
+
+  let score=100;const issues=[];
+  if(npaRate>5){score-=30;issues.push({t:'High NPA Rate',d:fmtP(npaRate),c:'#ef4444'});}
+  else if(npaRate>2){score-=15;issues.push({t:'NPA Rate Caution',d:fmtP(npaRate),c:'#f59e0b'});}
+  if(dpdLoans.length>5){score-=15;issues.push({t:'Multiple DPD loans',d:dpdLoans.length+' loans',c:'#f59e0b'});}
+  else if(dpdLoans.length>0){score-=5;issues.push({t:'Some DPD loans',d:dpdLoans.length+' loans',c:'#f59e0b'});}
+  if(avgScore>0&&avgScore<700){score-=10;issues.push({t:'Low avg borrower score',d:String(avgScore),c:'#f59e0b'});}
+  const sc=score>=80?'#10b981':score>=60?'#f59e0b':'#ef4444';
+  const sl=score>=80?'Excellent 🎉':score>=60?'Good 👍':'Needs Attention ⚠️';
+  el('health-score').innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+      <div style="width:72px;height:72px;border-radius:50%;background:conic-gradient(${sc} ${score}%, #f1f5f9 0);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px ${sc}30">
+        <div class="health-inner">
+          <div style="color:${sc};font-size:18px;font-weight:800">${score}</div>
+        </div>
+      </div>
+      <div>
+        <div style="color:${sc};font-size:18px;font-weight:800;letter-spacing:-0.5px">${sl}</div>
+        <div style="color:#94a3b8;font-size:11px;margin-top:3px">Portfolio health score /100</div>
+      </div>
+    </div>
+    ${issues.length?`<div style="background:#f8fafc;border-radius:10px;padding:10px">`+issues.map(i=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      <div style="width:7px;height:7px;border-radius:50%;background:${i.c};flex-shrink:0"></div>
+      <span style="font-size:12px;color:${i.c};font-weight:500;flex:1">${i.t}</span>
+      <span style="font-size:11px;color:#94a3b8">${i.d}</span>
+    </div>`).join('')+'</div>':`<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;color:#16a34a;font-size:12px;font-weight:600">✅ No major issues detected — keep it up!</div>`}`;
+}
+
+// ── SHARE
+function shareCard(){
+  const{mlSummary,loans,summary}=APP;
+  const active=loans.filter(l=>l.status==='ACTIVE').length;
+  const closed=loans.filter(l=>l.status==='CLOSED').length;
+  const npa=loans.filter(l=>l.npa>0||l.status==='NPA').length;
+  const roiPct=calcWeightedROI(APP.loans);
+  const xirr=calcXIRR(APP.transactions,mlSummary);
+  const xirrS=xirr!==null?xirr.toFixed(2)+'%':'—';
+  el('share-content').textContent=`💰 LenDenClub Portfolio Summary
+━━━━━━━━━━━━━━━━━━━━
+👤 ${summary.lenderName||'—'} · ${summary.lenderId||'—'}
+📅 ${summary.fromDate||'—'} → ${summary.toDate||'—'}
+
+💵 Disbursed:    ₹${mlSummary.disbursedAmount.toFixed(0)}
+📈 Outstanding:  ₹${mlSummary.principalOutstanding.toFixed(0)}
+✅ Received:     ₹${mlSummary.totalReceived.toFixed(2)}
+
+💰 Net Profit:   ₹${mlSummary.interestReceived.toFixed(2)}
+📊 XIRR:         ${xirrS}
+📊 Monthly ROI:  ${(roiPct/12).toFixed(2)}%
+🔴 NPA Amount:   ₹${mlSummary.npaAmount.toFixed(2)}
+
+🏦 Loans: ${loans.length} total
+   Active: ${active} | Closed: ${closed} | NPA: ${npa}
+━━━━━━━━━━━━━━━━━━━━`;
+  el('share-modal').style.display='flex';
+}
+function copyShare(){
+  const txt=el('share-content').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>{el('share-modal').style.display='none';});}
+  else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);el('share-modal').style.display='none';}
+}
+</script>
+</body>
+</html>
